@@ -2,7 +2,10 @@
 import peasy.*;
 
 PImage backgroundImage;
-float orbitDist;
+float planetOrbitDist;
+float moonOrbitDist;
+float planetRadius;
+float moonRadius;
 FileNamer fileNamer;
 
 PeasyCam cam;
@@ -11,7 +14,10 @@ void setup() {
   size(800, 800, P3D);
 
   backgroundImage = loadImage("background.png");
-  orbitDist = 220;
+  planetOrbitDist = 180;
+  moonOrbitDist = 30;
+  planetRadius = 10;
+  moonRadius = 5;
   fileNamer = new FileNamer("output/frame", "png");
 
   reset();
@@ -21,84 +27,116 @@ void reset() {
   cam = new PeasyCam(this, 1200);
   cam.setMinimumDistance(50);
   cam.setMaximumDistance(500);
-
-  drawBackground();
 }
 
 void draw() {
   drawBackground();
+  drawLight();
   drawSun();
-  drawMoonOrbit();
-  drawPlanet();
-  drawMoon();
+  drawPlanets();
+  drawMoons();
 }
 
 void drawBackground() {
   background(backgroundImage);
 }
 
-void drawSun() {
+void drawLight() {
   pushMatrix();
-  translate(0, 0, 2000);
+  translate(0, -1500, 2000);
   pointLight(255, 255, 255, 0, 0, 0);
   popMatrix();
 }
 
-void drawMoonOrbit() {
-  stroke(255);
-  strokeWeight(2);
-  noFill();
-}
-
-void drawPlanet() {
-  noStroke();
-  fill(68, 141, 122);
-
+void drawSun() {
+  fill(255, 192, 0);
+  
   pushMatrix();
-  sphereDetail(36);
+  sphereDetail(32);
   sphere(40);
   popMatrix();
 }
 
-void drawMoon() {
-  float sphereRadius = 5;
-  
-  pushStyle();
-  noStroke();
-
-  colorMode(HSB);
+void drawPlanets() {
   int numFrames = 10000;
   PVector prevPos = null;
-  for (int i = 0; i < frameCount * 4; i++) {
-    fill(140);
-
-    float rotX = 0.1 * cos(map(i, 0, numFrames, 0, 20 * 2 * PI));
-    float rotY = PI/2 + radians((float) i / 4);
-    float rotZ = -radians((float) i / 1000);
-    float translateX = map(i, 0, numFrames, 100, 300);
-
-    PVector pos = new PVector();
-    pos = ThreeDee.translate(pos, translateX, 0, 0);
-    pos = ThreeDee.rotateZ(pos, rotZ);
-    pos = ThreeDee.rotateY(pos, rotY);
-    pos = ThreeDee.rotateX(pos, rotX);
+  for (int i = 0; i < numFrames; i++) {
+    float t = (float)i / numFrames;
+    float rotation = getPlanetRotation(t);
     
-    if (prevPos == null || prevPos.dist(pos) > sphereRadius * 2) {
-      pushMatrix();
-      rotateX(rotX);
-      rotateY(rotY);
-      rotateZ(rotZ);
-      translate(translateX, 0, 0);
-      
-      sphereDetail(6);
-      sphere(sphereRadius);
-      
-      popMatrix();
-      
+    PVector pos = new PVector();
+    pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
+    pos = ThreeDee.rotateY(pos, rotation);
+    
+    if (prevPos == null || prevPos.dist(pos) > planetRadius * 2) {
+      drawPlanet(t);
       prevPos = pos;
     }
   }
-  popStyle();
+}
+
+void drawPlanet(float t) {
+  noStroke();
+  fill(68, 141, 122);
+  
+  float rotation = getPlanetRotation(t);
+
+  pushMatrix();
+  rotateY(rotation);
+  translate(planetOrbitDist, 0);
+  
+  sphereDetail(32);
+  sphere(planetRadius);
+  
+  popMatrix();
+}
+
+void drawMoons() {
+  int numFrames = 10000;
+  PVector prevPos = null;
+  for (int i = 0; i < numFrames; i++) {
+    float t = (float)i / numFrames;
+    float planetRotation = getPlanetRotation(t);
+    float moonRotation = getMoonRotation(t);
+    
+    PVector pos = new PVector();
+    pos = ThreeDee.translate(pos, moonOrbitDist, 0, 0);
+    pos = ThreeDee.rotateY(pos, moonRotation);
+    pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
+    pos = ThreeDee.rotateY(pos, planetRotation);
+    
+    if (prevPos == null || prevPos.dist(pos) > moonRadius * 2) {
+      drawMoon(t);
+      prevPos = pos;
+    }
+  }
+}
+
+void drawMoon(float t) {
+  noStroke();
+  fill(128);
+
+  float planetRotation = getPlanetRotation(t);
+  float moonRotation = getMoonRotation(t);
+
+  pushMatrix();
+  rotateY(planetRotation);
+  translate(planetOrbitDist, 0);
+  rotateY(moonRotation);
+  translate(moonOrbitDist, 0);
+
+  sphereDetail(32);
+  sphere(moonRadius);
+
+  popMatrix();
+}
+
+float getPlanetRotation(float t) {
+  return map(t, 0, 1, 0, 2 * PI);
+}
+
+float getMoonRotation(float t) {
+  return map(t, 0, 1, 0, 12 * 2 * PI);
 }
 
 void keyReleased() {
