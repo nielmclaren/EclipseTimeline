@@ -4,6 +4,7 @@ import peasy.*;
 PImage backgroundImage;
 float planetOrbitDist;
 float moonOrbitDist;
+float sunRadius;
 float planetRadius;
 float moonRadius;
 float lunarOrbitIncline;
@@ -11,6 +12,8 @@ float time;
 FileNamer fileNamer;
 
 TextureSphere sun;
+TextureSphere planet;
+TextureSphere moon;
 
 PeasyCam cam;
 
@@ -18,16 +21,19 @@ PeasyCam cam;
 void setup() {
   size(800, 800, P3D);
 
-  backgroundImage = loadImage("broadcastbg.jpg");
+  backgroundImage = loadImage("background.png");
+  sunRadius = 50;
   planetOrbitDist = 180;
   moonOrbitDist = 30;
   planetRadius = 10;
   moonRadius = 5;
-  lunarOrbitIncline = radians(20);//radians(5.1);
+  lunarOrbitIncline = radians(5.1);
   time = 0;
   fileNamer = new FileNamer("output/frame", "png");
 
-  sun = new TextureSphere();
+  sun = new TextureSphere(loadImage("sunmap.jpg"), sunRadius);
+  planet = new TextureSphere(loadImage("mars_1k_color.jpg"), planetRadius);
+  moon = new TextureSphere(loadImage("moonmap2k.jpg"), moonRadius);
 
   reset();
 }
@@ -101,23 +107,7 @@ void drawPlanet(float t) {
   rotateY(-rotation);
   rotateX(lunarOrbitIncline);
   
-  noStroke();
-  fill(68, 141, 122);
-  sphereDetail(32);
-  sphere(planetRadius);
-/*
-  pushMatrix();
-  rotateX(PI/2);
-  stroke(255, 0, 255);
-  noFill();
-  ellipseMode(RADIUS);
-  ellipse(0, 0, moonOrbitDist, moonOrbitDist);
-  popMatrix();
-*/
-  rotateY(PI/2);
-  stroke(255, 0, 0);
-  strokeWeight(2);
-  //line(0, -planetRadius * 2, 0, planetRadius * 2);
+  planet.draw(g);
   
   popMatrix();
   
@@ -168,16 +158,8 @@ void drawMoon(float t) {
   rotateY(moonRotation);
   translate(moonOrbitDist, 0);
 
-  noStroke();
-  fill(255);
-  sphereDetail(32);
-  sphere(moonRadius);
+  moon.draw(g);
   
-  rotateY(PI/2);
-  stroke(255, 0, 0);
-  strokeWeight(2);
-  line(0, -moonRadius * 2, 0, moonRadius * 2);
-
   popMatrix();
   popStyle();
 }
@@ -194,17 +176,6 @@ void drawLineThrough(PVector p, PVector q) {
 
   PVector a = PVector.add(p, dir);
   PVector b = PVector.sub(p, dir);
-
-  pushStyle();
-
-  stroke(255);
-  strokeWeight(2);
-  //line(p.x, p.y, p.z, q.x, -q.y, q.z);
-  //line(p.x, p.y, p.z, a.x, -a.y, a.z);
-  //line(p.x, p.y, p.z, b.x, -b.y, b.z);
-  line(p.x, p.y, p.z, q.x, -q.y, q.z);
-  
-  popStyle();
 }
 
 float getPlanetRotation(float t) {
