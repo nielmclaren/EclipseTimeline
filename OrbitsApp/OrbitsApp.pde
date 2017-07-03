@@ -17,38 +17,36 @@ TextureSphere moon;
 
 PeasyCam cam;
 
-
 void setup() {
   size(800, 800, P3D);
 
   backgroundImage = loadImage("background.png");
-  sunRadius = 50;
-  planetOrbitDist = 180;
-  moonOrbitDist = 30;
-  planetRadius = 10;
-  moonRadius = 5;
-  lunarOrbitIncline = radians(5.1);
+  sunRadius = 500;
+  planetOrbitDist = 1800;
+  moonOrbitDist = 300;
+  planetRadius = 100;
+  moonRadius = 50;
+  lunarOrbitIncline = radians(20);//radians(5.1);
   time = 0;
   fileNamer = new FileNamer("output/frame", "png");
 
   sun = new TextureSphere(loadImage("sunmap.jpg"), sunRadius);
   planet = new TextureSphere(loadImage("mars_1k_color.jpg"), planetRadius);
   moon = new TextureSphere(loadImage("moonmap2k.jpg"), moonRadius);
-
-  reset();
-}
-
-void reset() {
-  cam = new PeasyCam(this, 1200);
-  cam.setMinimumDistance(50);
-  cam.setMaximumDistance(500);
+  
+  cam = new PeasyCam(this, 12000);
+  
+  cam.setMinimumDistance(500);
+  cam.setMaximumDistance(5000);
 }
 
 void draw() {
   setupLight();
+  setupCamera(time);
+  
   draw(time);
 
-  time += 0.002;
+  time += 0.001;
   while (time > 1) {
     time -= 1;
   }
@@ -57,8 +55,9 @@ void draw() {
 void draw(float t) {
   drawBackground();
   drawSun();
-  drawPlanets(t);
-  drawMoons(t);
+  drawPlanet(t);
+  drawMoonPath();
+  drawMoon(t);
 }
 
 void setupLight() {
@@ -66,6 +65,13 @@ void setupLight() {
   translate(0, -1500, 2000);
   pointLight(255, 255, 255, 0, 0, 0);
   popMatrix();
+}
+
+void setupCamera(float t) {
+/*
+  PVector pos = getPlanetPosition();
+  camera(pos.x, pos.y, pos.z, 0, 0, 0, 0, 1, 0);
+*/
 }
 
 void drawBackground() {
@@ -81,11 +87,7 @@ void drawPlanets(float t) {
   PVector prevPos = null;
   for (int i = 0; i < numFrames; i++) {
     float u = (float)i / numFrames;
-    float rotation = getPlanetRotation(u);
-    
-    PVector pos = new PVector();
-    pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
-    pos = ThreeDee.rotateY(pos, rotation);
+    PVector pos = getPlanetPosition(u);
     
     if (prevPos == null || prevPos.dist(pos) > planetRadius * 2) {
       if (tDifference(t, u) < 0.05) {
@@ -97,20 +99,41 @@ void drawPlanets(float t) {
 }
 
 void drawPlanet(float t) {
-  float rotation = getPlanetRotation(t);
 
   pushStyle();
   
   pushMatrix();
-  rotateY(rotation);
-  translate(planetOrbitDist, 0);
-  rotateY(-rotation);
-  rotateX(lunarOrbitIncline);
-  
+  applyPlanetMatrix(t);
   planet.draw(g);
+
+  noFill();
+  stroke(255);
+  rotateX(lunarOrbitIncline);
+  rotateX(PI/2);
+  ellipse(0, 0, 2 * moonOrbitDist, 2 * moonOrbitDist);
   
   popMatrix();
   
+  popStyle();
+}
+
+void drawMoonPath() {
+  pushStyle();
+  stroke(255);
+  noFill();
+  
+  int numPoints = 1000;
+  PVector prevPos = null;
+  for (int i = 0; i < numPoints; i++) {
+    float t = (float)i / numPoints;
+    PVector pos = getMoonPosition(t);
+    if (prevPos != null) {
+      line(pos.x, pos.y, pos.z, prevPos.x, prevPos.y, prevPos.z);
+    }
+    
+    prevPos = pos;
+  }
+
   popStyle();
 }
 
@@ -119,47 +142,28 @@ void drawMoons(float t) {
   PVector prevPos = null;
   for (int i = 0; i < numFrames; i++) {
     float u = (float)i / numFrames;
-    float planetRotation = getPlanetRotation(u);
-    float moonRotation = getMoonRotation(u);
-    
-    PVector planetPos = new PVector();
-    planetPos = ThreeDee.rotateY(planetPos, -planetRotation);
-    planetPos = ThreeDee.translate(planetPos, planetOrbitDist, 0, 0);
-    planetPos = ThreeDee.rotateY(planetPos, planetRotation);
-    
-    PVector moonPos = new PVector();
-    moonPos = ThreeDee.translate(moonPos, moonOrbitDist, 0, 0);
-    moonPos = ThreeDee.rotateY(moonPos, moonRotation);
-    moonPos = ThreeDee.rotateX(moonPos, lunarOrbitIncline);
-    moonPos = ThreeDee.rotateY(moonPos, -planetRotation);
-    moonPos = ThreeDee.translate(moonPos, planetOrbitDist, 0, 0);
-    moonPos = ThreeDee.rotateY(moonPos, planetRotation);
-    
+    PVector moonPos = getMoonPosition(u);
     if (prevPos == null || prevPos.dist(moonPos) > moonRadius * 2) {
-      if (tDifference(t, u) < 0.05) {
-        drawMoon(u);
-      }
+      drawMoon(u);
       prevPos = moonPos;
     }
   }
 }
 
 void drawMoon(float t) {
-  float planetRotation = getPlanetRotation(t);
-  float moonRotation = getMoonRotation(t);
-
+  PVector planetPos = getPlanetPosition(t);
+  PVector moonPos = getMoonPosition(t);
+  
   pushStyle();
+  
+  stroke(255);
+  noFill();
+  line(planetPos.x, planetPos.y, planetPos.z, moonPos.x, moonPos.y, moonPos.z);
 
   pushMatrix();
-  rotateY(planetRotation);
-  translate(planetOrbitDist, 0);
-  rotateY(-planetRotation);
-  rotateX(lunarOrbitIncline);
-  rotateY(moonRotation);
-  translate(moonOrbitDist, 0);
-
+  applyMoonMatrix(t);
   moon.draw(g);
-  
+
   popMatrix();
   popStyle();
 }
@@ -184,6 +188,51 @@ float getPlanetRotation(float t) {
 
 float getMoonRotation(float t) {
   return map(t, 0, 1, 0, 12 * 2 * PI);
+}
+
+void applyPlanetMatrix(float t) {
+  float rotation = getPlanetRotation(t);
+  
+  rotateY(rotation);
+  translate(planetOrbitDist, 0);
+  rotateY(-rotation);
+}
+
+void applyMoonMatrix(float t) {
+  float planetRotation = getPlanetRotation(t);
+  float moonRotation = getMoonRotation(t);
+  
+  rotateY(planetRotation);
+  translate(planetOrbitDist, 0);
+  rotateY(-planetRotation);
+  rotateX(lunarOrbitIncline);
+  rotateY(moonRotation);
+  translate(moonOrbitDist, 0);
+}
+
+PVector getPlanetPosition(float t) {
+  float rotation = getPlanetRotation(t);
+  
+  PVector pos = new PVector();
+  pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
+  pos = ThreeDee.rotateY(pos, -rotation);
+  pos.y *= -1;
+  return pos;
+}
+
+PVector getMoonPosition(float t) {
+  float planetRotation = getPlanetRotation(t);
+  float moonRotation = getMoonRotation(t);
+  
+  PVector pos = new PVector();
+  pos = ThreeDee.translate(pos, moonOrbitDist, 0, 0);
+  pos = ThreeDee.rotateY(pos, -moonRotation);
+  pos = ThreeDee.rotateX(pos, lunarOrbitIncline);
+  pos = ThreeDee.rotateY(pos, planetRotation);
+  pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
+  pos = ThreeDee.rotateY(pos, -planetRotation);
+  pos.y *= -1;
+  return pos;
 }
 
 float tDifference(float t, float u) {
@@ -218,9 +267,6 @@ void keyReleased() {
       break;
     case 'b':
       drawBackground();
-      break;
-    case 'e':
-      reset();
       break;
     case 'r':
       save(fileNamer.next());
