@@ -33,11 +33,12 @@ void setup() {
   sun = new TextureSphere(loadImage("sunmap.jpg"), sunRadius);
   planet = new TextureSphere(loadImage("mars_1k_color.jpg"), planetRadius);
   moon = new TextureSphere(loadImage("moonmap2k.jpg"), moonRadius);
-  
+ /* 
   cam = new PeasyCam(this, 12000);
   
   cam.setMinimumDistance(500);
   cam.setMaximumDistance(5000);
+*/
 }
 
 void draw() {
@@ -68,10 +69,8 @@ void setupLight() {
 }
 
 void setupCamera(float t) {
-/*
-  PVector pos = getPlanetPosition();
+  PVector pos = getPlanetPosition(t);
   camera(pos.x, pos.y, pos.z, 0, 0, 0, 0, 1, 0);
-*/
 }
 
 void drawBackground() {
@@ -99,12 +98,11 @@ void drawPlanets(float t) {
 }
 
 void drawPlanet(float t) {
-
   pushStyle();
   
   pushMatrix();
   applyPlanetMatrix(t);
-  planet.draw(g);
+  //planet.draw(g);
 
   noFill();
   stroke(255);
