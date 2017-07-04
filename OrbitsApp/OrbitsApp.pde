@@ -15,6 +15,8 @@ TextureSphere sun;
 TextureSphere planet;
 TextureSphere moon;
 
+PGraphics buffer;
+
 PeasyCam cam;
 
 void setup() {
@@ -33,6 +35,9 @@ void setup() {
   sun = new TextureSphere(loadImage("sunmap.jpg"), sunRadius);
   planet = new TextureSphere(loadImage("mars_1k_color.jpg"), planetRadius);
   moon = new TextureSphere(loadImage("moonmap2k.jpg"), moonRadius);
+
+  buffer = createGraphics(width, height, P3D);
+  
  /* 
   cam = new PeasyCam(this, 12000);
   
@@ -42,49 +47,53 @@ void setup() {
 }
 
 void draw() {
-  setupLight();
+  buffer.beginDraw();
+  setupLight(buffer);
   
-  draw(time);
+  draw(buffer, time);
 
   time += 0.001;
   while (time > 1) {
     time -= 1;
   }
+
+  buffer.endDraw();
+  image(buffer, width/4, height/4, width/2, height/2);
 }
 
-void draw(float t) {
-  setupCamera(t);
-  drawBackground();
-  drawSun();
-  drawPlanet(t);
-  drawMoonPath();
-  drawMoon(t);
+void draw(PGraphics g, float t) {
+  setupCamera(g, t);
+  drawBackground(g);
+  drawSun(g);
+  drawPlanet(g, t);
+  drawMoonPath(g);
+  drawMoon(g, t);
 }
 
-void setupLight() {
-  ambientLight(64, 64, 64);
+void setupLight(PGraphics g) {
+  g.ambientLight(64, 64, 64);
   
-  pushMatrix();
-  translate(0, -1500, -2000);
-  pointLight(128, 128, 128, 0, 0, 0);
-  popMatrix();
+  g.pushMatrix();
+  g.translate(0, -1500, -2000);
+  g.pointLight(128, 128, 128, 0, 0, 0);
+  g.popMatrix();
 }
 
-void setupCamera(float t) {
+void setupCamera(PGraphics g, float t) {
   PVector pos = getPlanetPosition(t);
   pos.mult(1.5);
-  camera(pos.x, pos.y, pos.z, 0, 0, 0, 0, 1, 0);
+  g.camera(pos.x, pos.y, pos.z, 0, 0, 0, 0, 1, 0);
 }
 
-void drawBackground() {
-  background(backgroundImage);
+void drawBackground(PGraphics g) {
+  g.background(backgroundImage);
 }
 
-void drawSun() {
+void drawSun(PGraphics g) {
   sun.draw(g);
 }
 
-void drawPlanets(float t) {
+void drawPlanets(PGraphics g, float t) {
   int numFrames = 10000;
   PVector prevPos = null;
   for (int i = 0; i < numFrames; i++) {
@@ -93,36 +102,36 @@ void drawPlanets(float t) {
     
     if (prevPos == null || prevPos.dist(pos) > planetRadius * 2) {
       if (tDifference(t, u) < 0.05) {
-        drawPlanet(u);
+        drawPlanet(g, u);
       }
       prevPos = pos;
     }
   }
 }
 
-void drawPlanet(float t) {
-  pushStyle();
+void drawPlanet(PGraphics g, float t) {
+  g.pushStyle();
   
-  pushMatrix();
-  applyPlanetMatrix(t);
+  g.pushMatrix();
+  applyPlanetMatrix(g, t);
   planet.draw(g);
 
-  noFill();
-  stroke(255);
-  rotateY(-getPlanetRotation(t));
-  rotateX(lunarOrbitIncline);
-  rotateX(PI/2);
-  ellipse(0, 0, 2 * moonOrbitDist, 2 * moonOrbitDist);
+  g.noFill();
+  g.stroke(255);
+  g.rotateY(-getPlanetRotation(t));
+  g.rotateX(lunarOrbitIncline);
+  g.rotateX(PI/2);
+  g.ellipse(0, 0, 2 * moonOrbitDist, 2 * moonOrbitDist);
   
-  popMatrix();
+  g.popMatrix();
   
-  popStyle();
+  g.popStyle();
 }
 
-void drawMoonPath() {
-  pushStyle();
-  stroke(255);
-  noFill();
+void drawMoonPath(PGraphics g) {
+  g.pushStyle();
+  g.stroke(255);
+  g.noFill();
   
   int numPoints = 1000;
   PVector prevPos = null;
@@ -130,57 +139,43 @@ void drawMoonPath() {
     float t = (float)i / numPoints;
     PVector pos = getMoonPosition(t);
     if (prevPos != null) {
-      line(pos.x, pos.y, pos.z, prevPos.x, prevPos.y, prevPos.z);
+      g.line(pos.x, pos.y, pos.z, prevPos.x, prevPos.y, prevPos.z);
     }
     prevPos = pos;
   }
 
-  popStyle();
+  g.popStyle();
 }
 
-void drawMoons(float t) {
+void drawMoons(PGraphics g, float t) {
   int numFrames = 10000;
   PVector prevPos = null;
   for (int i = 0; i < numFrames; i++) {
     float u = (float)i / numFrames;
     PVector moonPos = getMoonPosition(u);
     if (prevPos == null || prevPos.dist(moonPos) > moonRadius * 2) {
-      drawMoon(u);
+      drawMoon(g, u);
       prevPos = moonPos;
     }
   }
 }
 
-void drawMoon(float t) {
+void drawMoon(PGraphics g, float t) {
   PVector planetPos = getPlanetPosition(t);
   PVector moonPos = getMoonPosition(t);
   
-  pushStyle();
+  g.pushStyle();
   
-  stroke(255);
-  noFill();
-  line(planetPos.x, planetPos.y, planetPos.z, moonPos.x, moonPos.y, moonPos.z);
+  g.stroke(255);
+  g.noFill();
+  g.line(planetPos.x, planetPos.y, planetPos.z, moonPos.x, moonPos.y, moonPos.z);
 
-  pushMatrix();
-  applyMoonMatrix(t);
+  g.pushMatrix();
+  applyMoonMatrix(g, t);
   moon.draw(g);
 
-  popMatrix();
-  popStyle();
-}
-
-void drawLineThrough(PVector p, PVector q) {
-  PVector delta = PVector.sub(p, q);
-  PVector dir = PVector.sub(p, q);
-  dir.normalize();
-  
-  PVector pDir = p.copy().normalize();
-  float length = map(pDir.dot(dir), -1, 1, delta.mag(), delta.mag() + 50);
-  
-  dir.mult(length);
-
-  PVector a = PVector.add(p, dir);
-  PVector b = PVector.sub(p, dir);
+  g.popMatrix();
+  g.popStyle();
 }
 
 float getPlanetRotation(float t) {
@@ -191,23 +186,23 @@ float getMoonRotation(float t) {
   return map(t, 0, 1, 0, 12 * 2 * PI);
 }
 
-void applyPlanetMatrix(float t) {
+void applyPlanetMatrix(PGraphics g, float t) {
   float rotation = getPlanetRotation(t);
   
-  rotateY(rotation);
-  translate(planetOrbitDist, 0);
+  g.rotateY(rotation);
+  g.translate(planetOrbitDist, 0);
 }
 
-void applyMoonMatrix(float t) {
+void applyMoonMatrix(PGraphics g, float t) {
   float planetRotation = getPlanetRotation(t);
   float moonRotation = getMoonRotation(t);
   
-  rotateY(planetRotation);
-  translate(planetOrbitDist, 0);
-  rotateY(-planetRotation);
-  rotateX(lunarOrbitIncline);
-  rotateY(moonRotation);
-  translate(moonOrbitDist, 0);
+  g.rotateY(planetRotation);
+  g.translate(planetOrbitDist, 0);
+  g.rotateY(-planetRotation);
+  g.rotateX(lunarOrbitIncline);
+  g.rotateY(moonRotation);
+  g.translate(moonOrbitDist, 0);
 }
 
 PVector getPlanetPosition(float t) {
@@ -251,11 +246,11 @@ void saveAnimation() {
   FileNamer animationNamer = new FileNamer("output/anim", "/");
   FileNamer frameNamer = new FileNamer(animationNamer.next() + "frame", "png");
 
-  setupLight();
+  setupLight(g);
 
   int numFrames = 300;
   for (int i = 0; i < numFrames; i++) {
-    draw((float)i / numFrames);
+    draw(g, (float)i / numFrames);
     save(frameNamer.next());
   }
 }
@@ -264,9 +259,6 @@ void keyReleased() {
   switch (key) {
     case 'a':
       saveAnimation();
-      break;
-    case 'b':
-      drawBackground();
       break;
     case 'r':
       save(fileNamer.next());
