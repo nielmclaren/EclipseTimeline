@@ -43,7 +43,6 @@ void setup() {
 
 void draw() {
   setupLight();
-  setupCamera(time);
   
   draw(time);
 
@@ -54,6 +53,7 @@ void draw() {
 }
 
 void draw(float t) {
+  setupCamera(t);
   drawBackground();
   drawSun();
   drawPlanet(t);
@@ -62,14 +62,17 @@ void draw(float t) {
 }
 
 void setupLight() {
+  ambientLight(64, 64, 64);
+  
   pushMatrix();
-  translate(0, -1500, 2000);
-  pointLight(255, 255, 255, 0, 0, 0);
+  translate(0, -1500, -2000);
+  pointLight(128, 128, 128, 0, 0, 0);
   popMatrix();
 }
 
 void setupCamera(float t) {
   PVector pos = getPlanetPosition(t);
+  pos.mult(1.5);
   camera(pos.x, pos.y, pos.z, 0, 0, 0, 0, 1, 0);
 }
 
@@ -102,10 +105,11 @@ void drawPlanet(float t) {
   
   pushMatrix();
   applyPlanetMatrix(t);
-  //planet.draw(g);
+  planet.draw(g);
 
   noFill();
   stroke(255);
+  rotateY(-getPlanetRotation(t));
   rotateX(lunarOrbitIncline);
   rotateX(PI/2);
   ellipse(0, 0, 2 * moonOrbitDist, 2 * moonOrbitDist);
@@ -122,13 +126,12 @@ void drawMoonPath() {
   
   int numPoints = 1000;
   PVector prevPos = null;
-  for (int i = 0; i < numPoints; i++) {
+  for (int i = 0; i <= numPoints; i++) {
     float t = (float)i / numPoints;
     PVector pos = getMoonPosition(t);
     if (prevPos != null) {
       line(pos.x, pos.y, pos.z, prevPos.x, prevPos.y, prevPos.z);
     }
-    
     prevPos = pos;
   }
 
@@ -193,7 +196,6 @@ void applyPlanetMatrix(float t) {
   
   rotateY(rotation);
   translate(planetOrbitDist, 0);
-  rotateY(-rotation);
 }
 
 void applyMoonMatrix(float t) {
@@ -251,7 +253,7 @@ void saveAnimation() {
 
   setupLight();
 
-  int numFrames = 100;
+  int numFrames = 300;
   for (int i = 0; i < numFrames; i++) {
     draw((float)i / numFrames);
     save(frameNamer.next());
