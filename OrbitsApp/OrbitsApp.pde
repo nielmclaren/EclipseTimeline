@@ -1,4 +1,3 @@
-
 import peasy.*;
 
 float planetOrbitDist;
@@ -58,6 +57,7 @@ void draw(PGraphics g, float t) {
   drawSun(g, t);
   drawPlanet(g, t);
   drawMoonOrbit(g, t);
+  drawMoonOrbitTangent(g, t);
   drawMoon(g, t);
   drawMoonPath(g, t);
 }
@@ -131,21 +131,6 @@ void drawPlanet(PGraphics g, float t) {
   g.stroke(lineColor1);
   g.sphereDetail(12);
   g.sphere(planetRadius);
-  /*
-  g.rotateY(PI/2);
-  
-  g.ellipseMode(RADIUS);
-  
-  g.noFill();
-  
-  g.stroke(lineColor1, 128);
-  g.strokeWeight(8);
-  g.ellipse(0, 0, planetRadius, planetRadius);
-  
-  g.stroke(lineColor1);
-  g.strokeWeight(2);
-  g.ellipse(0, 0, planetRadius, planetRadius);
-  */
   
   g.popStyle();
   g.popMatrix();
@@ -156,23 +141,27 @@ void drawMoonOrbit(PGraphics g, float t) {
   
   g.pushMatrix();
   applyPlanetMatrix(g, t);
+  g.rotateY(-getPlanetRotation(t));
+  g.rotateX(PI/2 + lunarOrbitIncline);
 
   g.noFill();
   g.stroke(lineColor0);
   g.strokeWeight(3);
-  g.rotateY(-getPlanetRotation(t));
-  g.rotateX(lunarOrbitIncline);
-  g.rotateX(PI/2);
   g.ellipse(0, 0, 2 * moonOrbitDist, 2 * moonOrbitDist);
   
   g.popMatrix();
-  
+
+  g.popStyle();
+}
+
+void drawMoonOrbitTangent(PGraphics g, float t) {
+  g.pushStyle();
+
   g.pushMatrix();
   applyPlanetMatrix(g, t);
   g.rotateY(-getPlanetRotation(t));
   g.rotateX(lunarOrbitIncline);
   g.rotateY(getPlanetRotation(t));
-  
   g.rotateX(PI/2);
   g.rotateZ(PI/2);
 
@@ -186,7 +175,7 @@ void drawMoonOrbit(PGraphics g, float t) {
 
   PVector pos = getPlanetPosition(t);
   g.line(0, 0, 0, pos.x, pos.y, pos.z);
-  
+
   g.popStyle();
 }
 
@@ -234,6 +223,7 @@ void drawMoon(PGraphics g, float t) {
   g.pushStyle();
   
   applyMoonMatrix(g, t);
+
   g.stroke(lineColor0);
   g.noFill();
   g.sphereDetail(8);
@@ -289,6 +279,18 @@ PVector getMoonPosition(float t) {
   pos = ThreeDee.rotateY(pos, -moonRotation);
   pos = ThreeDee.rotateX(pos, lunarOrbitIncline);
   pos = ThreeDee.rotateY(pos, planetRotation);
+  pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
+  pos = ThreeDee.rotateY(pos, -planetRotation);
+  pos.y *= -1;
+  return pos;
+}
+
+PVector getNewMoonPosition(float t) {
+  float planetRotation = getPlanetRotation(t);
+  PVector pos = new PVector();
+  pos = ThreeDee.rotateZ(pos, PI/2);
+  pos = ThreeDee.rotateX(pos, PI/2 + lunarOrbitIncline);
+  pos = ThreeDee.rotateY(pos, -planetRotation);
   pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
   pos = ThreeDee.rotateY(pos, -planetRotation);
   pos.y *= -1;
