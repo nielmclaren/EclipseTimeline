@@ -33,8 +33,7 @@ void setup() {
 
   buffer = createGraphics(width, height, P3D);
   blurrer = new FastBlurrer(width, height, 2);
-  
- /* 
+/* 
   cam = new PeasyCam(this, 12000);
   
   cam.setMinimumDistance(500);
@@ -43,14 +42,10 @@ void setup() {
 }
 
 void draw() {
-  buffer.beginDraw();
-  setupLight(buffer);
+  setupLight(g);
   
-  draw(buffer, time);
+  draw(g, time);
 
-  buffer.endDraw();
-  image(buffer, 0, 0);
-  
   time += 0.001;
   while (time > 1) {
     time -= 1;
@@ -62,6 +57,7 @@ void draw(PGraphics g, float t) {
   drawBackground(g);
   drawSun(g, t);
   drawPlanet(g, t);
+  drawMoonOrbit(g, t);
   drawMoon(g, t);
   drawMoonPath(g, t);
 }
@@ -93,36 +89,19 @@ void drawSun(PGraphics g, float t) {
   g.ellipseMode(RADIUS);
   
   g.noFill();
-  g.stroke(lineColor0);
-  g.strokeWeight(1);
-  g.ellipse(0, 0, 1180, 1180);
-  g.strokeWeight(3);
-  g.ellipse(0, 0, 1200, 1200);
-  g.strokeWeight(1);
-  g.ellipse(0, 0, 1250, 1250);
-
-  for (int i = 0; i < 256; i++) {
-    float a = (float)i / 256 * 2 * PI;
-    float r = 1200;
-    float r2 = i % 16 == 0 ? 5000 : 1250;
-    g.line(r * cos(a), r * sin(a), r2 * cos(a), r2 * sin(a));
-  }
-  
-  g.noFill();
   g.stroke(lineColor0, 128);
   g.strokeWeight(8);
   g.ellipse(0, 0, sunRadius, sunRadius);
   
-  g.fill(lineColor0, 64);
+  g.noFill();
   g.stroke(lineColor0);
   g.strokeWeight(4);
   g.ellipse(0, 0, sunRadius, sunRadius);
 
-  g.noFill();
-  g.stroke(lineColor0);
-  g.strokeWeight(1.5);
-  g.line(-5000, 0, 0, 5000, 0, 0);
-  
+  g.stroke(lineColor1);
+  g.strokeWeight(3);
+  g.line(-5000, 0, 5000, 0);
+
   g.popStyle();
   g.popMatrix();
 }
@@ -146,8 +125,13 @@ void drawPlanets(PGraphics g, float t) {
 void drawPlanet(PGraphics g, float t) {
   g.pushMatrix();
   g.pushStyle();
-  
+
   applyPlanetMatrix(g, t);
+  g.noFill();
+  g.stroke(lineColor1);
+  g.sphereDetail(12);
+  g.sphere(planetRadius);
+  /*
   g.rotateY(PI/2);
   
   g.ellipseMode(RADIUS);
@@ -161,11 +145,13 @@ void drawPlanet(PGraphics g, float t) {
   g.stroke(lineColor1);
   g.strokeWeight(2);
   g.ellipse(0, 0, planetRadius, planetRadius);
+  */
   
   g.popStyle();
   g.popMatrix();
-  
-  
+}
+
+void drawMoonOrbit(PGraphics g, float t) {
   g.pushStyle();
   
   g.pushMatrix();
@@ -173,18 +159,33 @@ void drawPlanet(PGraphics g, float t) {
 
   g.noFill();
   g.stroke(lineColor0);
-  g.strokeWeight(1.5);
-  g.line(-5000, 0, 0, 5000, 0, 0);
-  
-  g.noFill();
-  g.stroke(lineColor0);
   g.strokeWeight(3);
   g.rotateY(-getPlanetRotation(t));
   g.rotateX(lunarOrbitIncline);
   g.rotateX(PI/2);
   g.ellipse(0, 0, 2 * moonOrbitDist, 2 * moonOrbitDist);
+  
+  g.popMatrix();
+  
+  g.pushMatrix();
+  applyPlanetMatrix(g, t);
+  g.rotateY(-getPlanetRotation(t));
+  g.rotateX(lunarOrbitIncline);
+  g.rotateY(getPlanetRotation(t));
+  
+  g.rotateX(PI/2);
+  g.rotateZ(PI/2);
+
+  g.stroke(255, 0, 0);
+  g.strokeWeight(4);
+  g.line(0, 0, 0, moonOrbitDist);
+  g.line(0, moonOrbitDist, -10000, moonOrbitDist);
+  g.line(0, moonOrbitDist, 10000, moonOrbitDist);
 
   g.popMatrix();
+
+  PVector pos = getPlanetPosition(t);
+  g.line(0, 0, 0, pos.x, pos.y, pos.z);
   
   g.popStyle();
 }
