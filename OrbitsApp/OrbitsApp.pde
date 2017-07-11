@@ -10,7 +10,6 @@ float time;
 FileNamer fileNamer;
 
 PGraphics buffer;
-FastBlurrer blurrer;
 
 color lineColor0 = color(83, 80, 230);
 color lineColor1 = color(175, 209, 252);
@@ -31,19 +30,21 @@ void setup() {
   fileNamer = new FileNamer("output/frame", "png");
 
   buffer = createGraphics(width, height, P3D);
-  blurrer = new FastBlurrer(width, height, 2);
-/* 
-  cam = new PeasyCam(this, 12000);
+  cam = new PeasyCam(this, buffer, 12000);
   
   cam.setMinimumDistance(500);
   cam.setMaximumDistance(5000);
-*/
 }
 
 void draw() {
-  setupLight(g);
-  
-  draw(g, time);
+  buffer.beginDraw();
+  setupLight(buffer);
+  draw(buffer, time);
+  buffer.endDraw();
+
+  image(buffer, 0, 0);
+
+  drawHud(g, time);
 
   time += 0.001;
   while (time > 1) {
@@ -52,7 +53,7 @@ void draw() {
 }
 
 void draw(PGraphics g, float t) {
-  setupCamera(g, t);
+  //setupCamera(g, t);
   drawBackground(g);
   drawSun(g, t);
   drawPlanet(g, t);
@@ -87,11 +88,6 @@ void drawSun(PGraphics g, float t) {
   g.rotateY(PI/2 + getPlanetRotation(t));
   
   g.ellipseMode(RADIUS);
-  
-  g.noFill();
-  g.stroke(lineColor0, 128);
-  g.strokeWeight(8);
-  g.ellipse(0, 0, sunRadius, sunRadius);
   
   g.noFill();
   g.stroke(lineColor0);
@@ -159,22 +155,40 @@ void drawMoonOrbitTangent(PGraphics g, float t) {
 
   g.pushMatrix();
   applyPlanetMatrix(g, t);
+
+  g.pushMatrix();
+
+  g.rotateX(PI/2);
+  g.rotateY(PI);
+
+  g.stroke(255, 0, 0);
+  g.strokeWeight(4);
+  g.line(0, 0, moonOrbitDist, 0);
+  g.line(moonOrbitDist, 0, moonOrbitDist, -10000);
+  g.line(moonOrbitDist, 0, moonOrbitDist, 10000);
+
+  g.popMatrix();
+
   g.rotateY(-getPlanetRotation(t));
   g.rotateX(lunarOrbitIncline);
   g.rotateY(getPlanetRotation(t));
   g.rotateX(PI/2);
-  g.rotateZ(PI/2);
+  g.rotateY(PI);
 
   g.stroke(255, 0, 0);
   g.strokeWeight(4);
-  g.line(0, 0, 0, moonOrbitDist);
-  g.line(0, moonOrbitDist, -10000, moonOrbitDist);
-  g.line(0, moonOrbitDist, 10000, moonOrbitDist);
+  g.line(0, 0, moonOrbitDist, 0);
+  g.line(moonOrbitDist, 0, moonOrbitDist, -10000);
+  g.line(moonOrbitDist, 0, moonOrbitDist, 10000);
 
   g.popMatrix();
 
-  PVector pos = getPlanetPosition(t);
-  g.line(0, 0, 0, pos.x, pos.y, pos.z);
+  g.stroke(0, 255, 0);
+  g.strokeWeight(1);
+  PVector newMoonPos = getNewMoonPosition(t);
+  g.line(0, 0, 0, newMoonPos.x, newMoonPos.y, newMoonPos.z);
+  PVector planetPos = getPlanetPosition(t);
+  g.line(0, 0, 0, planetPos.x, planetPos.y, planetPos.z);
 
   g.popStyle();
 }
@@ -233,6 +247,95 @@ void drawMoon(PGraphics g, float t) {
   g.popMatrix();
 }
 
+void drawHud(PGraphics g, float t) {
+  g.fill(255, 255, 0);
+
+  float moonAngle = getMoonAngle(t);
+  g.text(degrees(moonAngle), 20, 20);
+
+  float newMoonAngle = getNewMoonAngle(t);
+  g.text(degrees(newMoonAngle), 20, 50);
+
+  g.fill(192);
+  g.text("Sun-moon angle", 25, 620);
+  drawMoonChart(g, t, 25, 625, 350, 150);
+
+  g.text("Sun-new moon angle", 425, 620);
+  drawNewMoonChart(g, t, 425, 625, 350, 150);
+}
+
+void drawMoonChart(PGraphics g, float t, float startX, float startY, float width, float height) {
+  g.pushStyle();
+
+  g.noStroke();
+  g.fill(0, 0, 255, 128);
+  g.rect(startX, startY, width, height);
+
+  g.noFill();
+
+  for (int x = 0; x < width; x++) {
+    float u = (float)x / width;
+    float prevU = (float)(x - 1) / width;
+    float moonAngle = getMoonAngle(u);
+    float y = map(moonAngle, 0, PI, 0, -height);
+
+    if (prevU < t && t < u) {
+      g.stroke(255, 255, 0);
+      g.strokeWeight(2);
+    } else {
+      g.stroke(0, 0, 255);
+      g.strokeWeight(1);
+    }
+    g.line(startX + x, startY + height, startX + x, startY + height + y);
+  }
+  g.popStyle();
+}
+
+void drawNewMoonChart(PGraphics g, float t, float startX, float startY, float width, float height) {
+  g.pushStyle();
+
+  g.noStroke();
+  g.fill(0, 0, 255, 128);
+  g.rect(startX, startY, width, height);
+
+  g.noFill();
+  g.stroke(0, 0, 255);
+
+  for (int x = 0; x < width; x++) {
+    float u = (float)x / width;
+    float prevU = (float)(x - 1) / width;
+    float newMoonAngle = getNewMoonAngle(u);
+    float y = map(newMoonAngle, 0, 0.15 * PI, 0, -height);
+
+    if (prevU < t && t < u) {
+      g.stroke(255, 255, 0);
+      g.strokeWeight(2);
+    } else {
+      g.stroke(0, 0, 255);
+      g.strokeWeight(1);
+    }
+    g.line(startX + x, startY + height, startX + x, startY + height + y);
+  }
+  g.popStyle();
+}
+
+// Angle between sun and where the new moon would cross.
+float getNewMoonAngle(float t) {
+  PVector sunPos = new PVector();
+  PVector planetPos = getPlanetPosition(t);
+  PVector newMoonPos = getNewMoonPosition(t);
+
+  return PVector.angleBetween(PVector.sub(newMoonPos, planetPos), PVector.sub(sunPos, planetPos));
+}
+
+float getMoonAngle(float t) {
+  PVector sunPos = new PVector();
+  PVector planetPos = getPlanetPosition(t);
+  PVector moonPos = getMoonPosition(t);
+
+  return PVector.angleBetween(PVector.sub(moonPos, planetPos), PVector.sub(sunPos, planetPos));
+}
+
 float getPlanetRotation(float t) {
   return map(t, 0, 1, 0, 2 * PI);
 }
@@ -288,12 +391,14 @@ PVector getMoonPosition(float t) {
 PVector getNewMoonPosition(float t) {
   float planetRotation = getPlanetRotation(t);
   PVector pos = new PVector();
-  pos = ThreeDee.rotateZ(pos, PI/2);
-  pos = ThreeDee.rotateX(pos, PI/2 + lunarOrbitIncline);
+  pos = ThreeDee.translate(pos, moonOrbitDist, 0, 0);
+  pos = ThreeDee.rotateY(pos, PI);
+  pos = ThreeDee.rotateX(pos, PI/2);
+  pos = ThreeDee.rotateY(pos, planetRotation);
+  pos = ThreeDee.rotateX(pos, lunarOrbitIncline);
   pos = ThreeDee.rotateY(pos, -planetRotation);
   pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
   pos = ThreeDee.rotateY(pos, -planetRotation);
-  pos.y *= -1;
   return pos;
 }
 
@@ -313,11 +418,17 @@ void saveAnimation() {
   FileNamer animationNamer = new FileNamer("output/anim", "/");
   FileNamer frameNamer = new FileNamer(animationNamer.next() + "frame", "png");
 
-  setupLight(g);
-
   int numFrames = 300;
   for (int i = 0; i < numFrames; i++) {
-    draw(g, (float)i / numFrames);
+    float t = (float)i / numFrames;
+    buffer.beginDraw();
+    setupLight(buffer);
+    draw(buffer, t);
+    buffer.endDraw();
+
+    image(buffer, 0, 0);
+    drawHud(g, t);
+
     save(frameNamer.next());
   }
 }
