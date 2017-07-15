@@ -23,7 +23,7 @@ void setup() {
   moonOrbitDist = 600;
   planetRadius = 200;
   moonRadius = 100;
-  numMonthsPerYear = 12;
+  numMonthsPerYear = 3;
   time = 0;
   fileNamer = new FileNamer("output/frame", "png");
 /*
@@ -50,9 +50,20 @@ void draw(PGraphics g, float t) {
   drawBackground(g);
   drawSun(g, t);
   drawPlanet(g, t);
+
   drawMoonOrbit(g, t);
   drawSynodicProgress(g, t);
   drawMoon(g, t);
+
+  drawMoonOrbit(g, normalizeTime(t + 1./3));
+  drawSynodicProgress(g, normalizeTime(t + 1./3));
+  drawMoon(g, normalizeTime(t + 1./3));
+
+  drawMoonOrbit(g, normalizeTime(t + 2./3));
+  drawSynodicProgress(g, normalizeTime(t + 2./3));
+  drawMoon(g, normalizeTime(t + 2./3));
+
+  drawRandomShit(g, t);
 }
 
 void setupLight(PGraphics g) {
@@ -132,14 +143,14 @@ void drawSynodicProgress(PGraphics g, float t) {
 
   g.noFill();
   g.stroke(lineColor2);
-  g.line(0, 0, 0, planetPos.x, planetPos.y, planetPos.z);
-  g.line(planetPos.x, planetPos.y, planetPos.z, moonPos.x, moonPos.y, moonPos.z);
+  drawLine(g, new PVector(), planetPos);
+  drawLine(g, planetPos, moonPos);
 
   g.stroke(lineColor1);
-  g.line(planetPos.x, planetPos.y, planetPos.z, prevNewMoonPos.x, prevNewMoonPos.y, prevNewMoonPos.z);
+  drawLine(g, planetPos, prevNewMoonPos);
 
   PVector prevPos = null;
-  for (float u = prevNewMoonTime; u < t + 0.5; u += 0.0001) {
+  for (float u = prevNewMoonTime; u < t; u += 0.0001) {
     PVector pos = getMoonPosition(t, u);
     if (prevPos != null) {
       PVector rel = PVector.sub(pos, planetPos);
@@ -149,18 +160,18 @@ void drawSynodicProgress(PGraphics g, float t) {
       
       g.stroke(lineColor2);
       g.strokeWeight(30);
-      g.line(prevPosOuter.x, prevPosOuter.y, prevPosOuter.z, posOuter.x, posOuter.y, posOuter.z);
+      drawLine(g, prevPosOuter, posOuter);
     }
     prevPos = pos;
   }
   
   prevPos = null;
-  for (float u = prevNewMoonTime; u < t + 0.5; u += 0.001) {
+  for (float u = prevNewMoonTime; u < t; u += 0.001) {
     PVector pos = getMoonPosition(t, u);
     if (prevPos != null) {
       g.stroke(lineColor1);
       g.strokeWeight(1);
-      g.line(prevPos.x, prevPos.y, prevPos.z, pos.x, pos.y, pos.z);
+      drawLine(g, prevPos, pos);
     }
     prevPos = pos;
   }
@@ -168,7 +179,7 @@ void drawSynodicProgress(PGraphics g, float t) {
   g.noFill();
   g.stroke(lineColor1);
   g.strokeWeight(2);
-  g.line(planetPos.x, planetPos.y, planetPos.z, prevNewMoonOuter.x, prevNewMoonOuter.y, prevNewMoonOuter.z);
+  drawLine(g, planetPos, prevNewMoonOuter);
 
   g.popMatrix();
 
@@ -193,6 +204,22 @@ void drawMoon(PGraphics g, float t) {
   g.popMatrix();
 }
 
+void drawRandomShit(PGraphics g, float t) {
+  PVector moonPos0 = getMoonPosition(t);
+  PVector moonPos1 = getMoonPosition(normalizeTime(t + 1./3));
+  PVector moonPos2 = getMoonPosition(normalizeTime(t + 2./3));
+
+  g.pushStyle();
+
+  g.noFill();
+  g.stroke(lineColor2);
+  drawLine(g, moonPos0, moonPos1);
+  drawLine(g, moonPos1, moonPos2);
+  drawLine(g, moonPos2, moonPos0);
+
+  g.popStyle();
+}
+
 float getPlanetRotation(float t) {
   return map(t, 0, 1, 0, 2 * PI);
 }
@@ -215,7 +242,7 @@ void applyMoonMatrix(PGraphics g, float t) {
   g.rotateY(planetRotation);
   g.translate(planetOrbitDist, 0);
   g.rotateY(-planetRotation);
-  g.rotateY(-moonRotation);
+  g.rotateY(-moonRotation - PI);
   g.translate(moonOrbitDist, 0);
 }
 
@@ -239,7 +266,7 @@ PVector getMoonPosition(float t, float u) {
   
   PVector pos = new PVector();
   pos = ThreeDee.translate(pos, moonOrbitDist, 0, 0);
-  pos = ThreeDee.rotateY(pos, moonRotation);
+  pos = ThreeDee.rotateY(pos, moonRotation + PI);
   pos = ThreeDee.rotateY(pos, planetRotation);
   pos = ThreeDee.translate(pos, planetOrbitDist, 0, 0);
   pos = ThreeDee.rotateY(pos, -planetRotation);
@@ -249,13 +276,17 @@ PVector getMoonPosition(float t, float u) {
 
 float getPrevNewMoonTime(float t) {
   int k = numMonthsPerYear + 1;
-  return (float)floor(k * (t + 0.5)) / k;
+  return normalizeTime(0.5 + (float)floor(k * (t - 0.5)) / k);
 }
 
 float normalizeTime(float t) {
   while (t < 0) t++;
   while (t >= 1) t--;
   return t;
+}
+
+void drawLine(PGraphics g, PVector p0, PVector p1) {
+  g.line(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
 }
 
 void saveAnimation() {
@@ -267,7 +298,6 @@ void saveAnimation() {
   int numFrames = 300;
   for (int i = 0; i < numFrames; i++) {
     float t = (float)i / numFrames;
-    setupLight(g);
     draw(g, t);
 
     save(frameNamer.next());
