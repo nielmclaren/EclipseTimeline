@@ -48,20 +48,20 @@ void draw() {
 void draw(PGraphics g, float t) {
   setupCamera(g, t);
   drawBackground(g);
-  drawSun(g, t);
-  drawPlanet(g, t);
+  //drawSun(g, t);
+  //drawPlanet(g, t);
 
-  drawMoonOrbit(g, t);
+  //drawMoonOrbit(g, t);
   drawSynodicProgress(g, t);
-  drawMoon(g, t);
+  //drawMoon(g, t);
 
-  drawMoonOrbit(g, normalizeTime(t + 1./3));
+  //drawMoonOrbit(g, normalizeTime(t + 1./3));
   drawSynodicProgress(g, normalizeTime(t + 1./3));
-  drawMoon(g, normalizeTime(t + 1./3));
+  //drawMoon(g, normalizeTime(t + 1./3));
 
-  drawMoonOrbit(g, normalizeTime(t + 2./3));
+  //drawMoonOrbit(g, normalizeTime(t + 2./3));
   drawSynodicProgress(g, normalizeTime(t + 2./3));
-  drawMoon(g, normalizeTime(t + 2./3));
+  //drawMoon(g, normalizeTime(t + 2./3));
 
   drawRandomShit(g, t);
 }
@@ -119,7 +119,7 @@ void drawMoonOrbit(PGraphics g, float t) {
 
   g.noFill();
   g.stroke(lineColor0);
-  g.strokeWeight(3);
+  g.strokeWeight(1);
   g.ellipseMode(RADIUS);
   g.ellipse(0, 0, moonOrbitDist, moonOrbitDist);
   
@@ -140,15 +140,15 @@ void drawSynodicProgress(PGraphics g, float t) {
   g.pushStyle();
 
   g.pushMatrix();
-
+/*
   g.noFill();
   g.stroke(lineColor2);
   drawLine(g, new PVector(), planetPos);
   drawLine(g, planetPos, moonPos);
 
-  g.stroke(lineColor1);
+  g.stroke(lineColor0);
   drawLine(g, planetPos, prevNewMoonPos);
-
+/*
   PVector prevPos = null;
   for (float u = prevNewMoonTime; u < t; u += 0.0001) {
     PVector pos = getMoonPosition(t, u);
@@ -175,12 +175,12 @@ void drawSynodicProgress(PGraphics g, float t) {
     }
     prevPos = pos;
   }
-  
+
   g.noFill();
   g.stroke(lineColor1);
   g.strokeWeight(2);
   drawLine(g, planetPos, prevNewMoonOuter);
-
+ */ 
   g.popMatrix();
 
   g.popStyle();
@@ -195,9 +195,9 @@ void drawMoon(PGraphics g, float t) {
   
   applyMoonMatrix(g, t);
 
-  g.stroke(lineColor1);
+  g.stroke(lineColor2);
   g.noFill();
-  g.sphereDetail(8);
+  g.sphereDetail(16);
   g.sphere(moonRadius);
   
   g.popStyle();
@@ -205,17 +205,31 @@ void drawMoon(PGraphics g, float t) {
 }
 
 void drawRandomShit(PGraphics g, float t) {
-  PVector moonPos0 = getMoonPosition(t);
-  PVector moonPos1 = getMoonPosition(normalizeTime(t + 1./3));
-  PVector moonPos2 = getMoonPosition(normalizeTime(t + 2./3));
+  float t0 = t;
+  float t1 = normalizeTime(t + 1./3);
+  float t2 = normalizeTime(t + 2./3);
+  PVector moonPos0 = getMoonPosition(t0);
+  PVector moonPos1 = getMoonPosition(t1);
+  PVector moonPos2 = getMoonPosition(t2);
+
+  PVector newMoonPos0 = getNewMoonPosition(t0);
+  PVector newMoonPos1 = getNewMoonPosition(t1);
+  PVector newMoonPos2 = getNewMoonPosition(t2);
+
+  PVector prevNewMoonPos0 = getPrevNewMoonPosition(t0);
+  PVector prevNewMoonPos1 = getPrevNewMoonPosition(t1);
+  PVector prevNewMoonPos2 = getPrevNewMoonPosition(t2);
 
   g.pushStyle();
 
-  g.noFill();
-  g.stroke(lineColor2);
-  drawLine(g, moonPos0, moonPos1);
-  drawLine(g, moonPos1, moonPos2);
-  drawLine(g, moonPos2, moonPos0);
+  g.fill(red(lineColor2), green(lineColor2), blue(lineColor2), 64);
+  g.stroke(lineColor0);
+  drawTriangle(g, moonPos0, moonPos1, moonPos2);
+  drawTriangle(g, prevNewMoonPos0, prevNewMoonPos1, prevNewMoonPos2);
+
+  g.fill(red(lineColor0), green(lineColor0), blue(lineColor0), 64);
+  g.stroke(lineColor1);
+  drawTriangle(g, newMoonPos0, newMoonPos1, newMoonPos2);
 
   g.popStyle();
 }
@@ -279,6 +293,16 @@ float getPrevNewMoonTime(float t) {
   return normalizeTime(0.5 + (float)floor(k * (t - 0.5)) / k);
 }
 
+PVector getPrevNewMoonPosition(float t) {
+  return getMoonPosition(t, getPrevNewMoonTime(t));
+}
+
+PVector getNewMoonPosition(float t) {
+  PVector result = getPlanetPosition(t);
+  result.mult((result.mag() - moonOrbitDist) / result.mag());
+  return result;
+}
+
 float normalizeTime(float t) {
   while (t < 0) t++;
   while (t >= 1) t--;
@@ -287,6 +311,15 @@ float normalizeTime(float t) {
 
 void drawLine(PGraphics g, PVector p0, PVector p1) {
   g.line(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
+}
+
+void drawTriangle(PGraphics g, PVector p, PVector q, PVector r) {
+  g.beginShape();
+  g.vertex(p.x, p.y, p.z);
+  g.vertex(q.x, q.y, q.z);
+  g.vertex(r.x, r.y, r.z);
+  g.vertex(p.x, p.y, p.z);
+  g.endShape();
 }
 
 void saveAnimation() {
