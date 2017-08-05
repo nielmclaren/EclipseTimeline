@@ -15,6 +15,7 @@ FileNamer fileNamer;
 color lineColor0 = color(83, 80, 230);
 color lineColor1 = color(175, 209, 252);
 color lineColor2 = color(17, 5, 78);
+color lineColor3 = color(62, 60, 129);
 
 boolean isPaused;
 
@@ -51,7 +52,6 @@ void draw() {
 
 void draw(PGraphics g, float t) {
   drawBackground(g);
-  drawSiderealProgress(g, t);
   drawAnomalisticProgress(g, t);
   drawPlanet(g, t);
   drawMoonOrbit(g, t);
@@ -84,7 +84,7 @@ void drawPlanet(PGraphics g, float t) {
 void drawMoonOrbit(PGraphics g, float t) {
   g.pushStyle();
   g.noFill();
-  g.stroke(lineColor0);
+  g.stroke(lineColor1);
   g.strokeWeight(2);
 
   int numFrames = 100;
@@ -119,6 +119,7 @@ void drawMoonPositions(PGraphics g, float t) {
   g.line(perigeeStart.x, perigeeStart.y, perigeeEnd.x, perigeeEnd.y);
   
   g.ellipseMode(RADIUS);
+  g.fill(0);
   g.ellipse(perigee.x, perigee.y, moonRadius, moonRadius);
 
   g.noStroke();
@@ -142,26 +143,25 @@ void drawMoonPositions(PGraphics g, float t) {
   g.popStyle();
 }
 
-void drawSiderealProgress(PGraphics g, float t) {
-}
-
 void drawAnomalisticProgress(PGraphics g, float t) {
   g.pushStyle();
   g.noFill();
   
-  float offset = 40;
+  float baseOffset = 20;
   float prevPerigeeTime = getPrevPerigeeTime(t);
   PVector prevPerigeePos = getPrevPerigeePos(t);
-  PVector prevPerigeeEnd = PVector.mult(prevPerigeePos, (prevPerigeePos.mag() + 2 * offset) / prevPerigeePos.mag());
+  PVector prevPerigeeEnd = PVector.mult(prevPerigeePos, (prevPerigeePos.mag() + 4 * baseOffset) / prevPerigeePos.mag());
 
   PVector prevPos = null;
   for (float u = prevPerigeeTime; u < t; u += 0.0001) {
     PVector pos = getMoonPosition(u);
     if (prevPos != null) {
+      float delta = (u - prevPerigeeTime) / (1 / apsidalPrecessionPeriod);
+      float offset = map(delta, 0, 1, baseOffset * 2, baseOffset);
       PVector prevPosEnd = PVector.mult(prevPos, (prevPos.mag() + offset) / prevPos.mag());
       PVector posEnd = PVector.mult(pos, (pos.mag() + offset) / pos.mag());
       
-      g.stroke(lineColor2);
+      g.stroke(lerpColor(lineColor2, lineColor3, delta));
       g.strokeWeight(2 * offset);
       g.line(prevPosEnd.x, prevPosEnd.y, posEnd.x, posEnd.y);
     }
@@ -172,7 +172,7 @@ void drawAnomalisticProgress(PGraphics g, float t) {
   for (float u = prevPerigeeTime; u < t; u += 0.001) {
     PVector pos = getMoonPosition(u);
     if (prevPos != null) {
-      g.stroke(lineColor1);
+      g.stroke(lineColor0);
       g.strokeWeight(2);
       g.line(prevPos.x, prevPos.y, pos.x, pos.y);
     }
@@ -180,7 +180,7 @@ void drawAnomalisticProgress(PGraphics g, float t) {
   }
   
   g.noFill();
-  g.stroke(lineColor1);
+  g.stroke(lineColor0);
   g.strokeWeight(2);
   g.line(0, 0, prevPerigeeEnd.x, prevPerigeeEnd.y);
 
@@ -232,8 +232,8 @@ PVector getMoonPosition(float t, float u) {
   float y = b * sin(u * 2 * PI);
 
   return new PVector(
-    x * cos(t * 2 * PI) + y * sin(t * 2 * PI),
-    x * sin(t * 2 * PI) - y * cos(t * 2 * PI));
+    x * cos(-t * 2 * PI) + y * sin(-t * 2 * PI),
+    x * sin(-t * 2 * PI) - y * cos(-t * 2 * PI));
 }
 
 void saveAnimation() {
