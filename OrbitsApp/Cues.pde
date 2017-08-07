@@ -58,69 +58,64 @@ class Cues {
   }
 
   Cues semExternalView(long durationMs) {
-    if (durationMs > 0) {
-      _startYaw = _yaw;
-      _startPitch = _pitch;
-      _startDist = _dist;
-
-      _targetYaw = 0;
-      _targetPitch = radians(15);
-      _targetDist = _sim.planetOrbitDist() * 2.2;
-
-      _durationMs = durationMs;
-      _startTime = millis();
-    } else {
-      _yaw = 0;
-      _pitch = radians(15);
-      _dist = _sim.planetOrbitDist() * 2.2;
-
-      _durationMs = 0;
-      _startTime = 0;
-    }
+    animateTo(new CameraSetting(0, radians(15), _sim.planetOrbitDist() * 2.2), durationMs);
     _followMode = FOLLOW_NONE;
     return this;
   }
 
   Cues semSideView(long durationMs) {
-    if (durationMs > 0) {
-      _startYaw = _yaw;
-      _startPitch = _pitch;
-      _startDist = _dist;
-
-      _targetYaw = 0;
-      _targetPitch = 0;
-      _targetDist = _sim.planetOrbitDist() * 2.2;
-
-      _durationMs = durationMs;
-      _startTime = millis();
-    } else {
-      _yaw = 0;
-      _pitch = radians(15);
-      _dist = _sim.planetOrbitDist() * 2.2;
-
-      _durationMs = 0;
-      _startTime = 0;
-    }
+    animateTo(new CameraSetting(0, 0, _sim.planetOrbitDist() * 2.2), durationMs);
     _followMode = FOLLOW_NONE;
     return this;
   }
 
   Cues planetExternal(long durationMs) {
     _followMode = FOLLOW_PLANET_EXTERNAL;
-
-    _startYaw = _yaw;
-    _startPitch = _pitch;
-    _startDist = _dist;
-
-    _durationMs = durationMs;
-    _startTime = millis();
-
+    setInitialAnimationProperties(durationMs);
     return this;
   }
 
   Cues semClean() {
     _renderer.showSunPlanetLine(false);
     return this;
+  }
+
+  private void animateTo(CameraSetting setting, long durationMs) {
+    if (durationMs > 0) {
+      _targetYaw = setting.yaw();
+      _targetPitch = setting.pitch();
+      _targetDist = setting.dist();
+
+      setInitialAnimationProperties(durationMs);
+    } else {
+      _yaw = setting.yaw();
+      _pitch = setting.pitch();
+      _dist = setting.dist();
+
+      setCompletedAnimationProperties();
+    }
+  }
+
+  private void setInitialAnimationProperties(long durationMs) {
+    _startYaw = _yaw;
+    _startPitch = _pitch;
+    _startDist = _dist;
+
+    _durationMs = durationMs;
+    _startTime = millis();
+  }
+
+  private void setCompletedAnimationProperties() {
+    _startYaw = 0;
+    _startPitch = 0;
+    _startDist = 0;
+
+    _targetYaw = 0;
+    _targetPitch = 0;
+    _targetDist = 0;
+
+    _durationMs = 0;
+    _startTime = 0;
   }
 
   public void update(float t) {
@@ -171,16 +166,7 @@ class Cues {
       _pitch = _targetPitch;
       _dist = _targetDist;
 
-      _startYaw = 0;
-      _startPitch = 0;
-      _startDist = 0;
-
-      _targetYaw = 0;
-      _targetPitch = 0;
-      _targetDist = 0;
-
-      _durationMs = 0;
-      _startTime = 0;
+      setCompletedAnimationProperties();
     } else {
       _yaw = _startYaw + u * getAngleBetween(_startYaw, _targetYaw);
       _pitch = _startPitch + u * getAngleBetween(_startPitch, _targetPitch);
