@@ -1,16 +1,29 @@
 
 class Renderer {
+  private boolean _showSunPlanetLine;
+
   private color _lineColor0 = color(83, 80, 230);
   private color _lineColor1 = color(175, 209, 252);
   private color _lineColor2 = color(17, 5, 78);
 
-  Renderer() {}
+  Renderer() {
+    _showSunPlanetLine = true;
+  }
+
+  Renderer showSunPlanetLine(boolean v) {
+    _showSunPlanetLine = v;
+    return this;
+  }
 
   void draw(Sim sim, PGraphics g, float t) {
     drawBackground(sim, g);
     drawSun(sim, g, t);
     drawPlanetOrbit(sim, g, t);
-    drawSunPlanetLine(sim, g, t);
+
+    if (_showSunPlanetLine) {
+      drawSunPlanetLine(sim, g, t);
+    }
+
     drawPlanet(sim, g, t);
     drawMoonOrbit(sim, g, t);
     drawMoon(sim, g, t);
