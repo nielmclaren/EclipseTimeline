@@ -1,6 +1,7 @@
 
 class Renderer {
   private boolean _showLunarApsides;
+  private boolean _showOrientationCues;
   private boolean _showPlanetOrbit;
   private boolean _showSun;
   private boolean _showSunPlanetLine;
@@ -11,6 +12,7 @@ class Renderer {
 
   Renderer() {
     _showLunarApsides = true;
+    _showOrientationCues = true;
     _showPlanetOrbit = true;
     _showSun = true;
     _showSunPlanetLine = true;
@@ -18,6 +20,11 @@ class Renderer {
 
   Renderer showLunarApsides(boolean v) {
     _showLunarApsides = v;
+    return this;
+  }
+
+  Renderer showOrientationCues(boolean v) {
+    _showOrientationCues = v;
     return this;
   }
 
@@ -38,6 +45,11 @@ class Renderer {
 
   void draw(Sim sim, PGraphics g, float t) {
     drawBackground(sim, g);
+
+    if (_showOrientationCues) {
+      drawOrientationCues(sim, g);
+    }
+
     drawSun(sim, g, t);
 
     if (_showPlanetOrbit) {
@@ -60,6 +72,21 @@ class Renderer {
 
   private void drawBackground(Sim sim, PGraphics g) {
     g.background(0);
+  }
+
+  private void drawOrientationCues(Sim sim, PGraphics g) {
+    g.pushMatrix();
+    g.pushStyle();
+
+    g.noFill();
+    g.stroke(_lineColor2);
+    g.strokeWeight(4);
+    g.rectMode(CENTER);
+
+    g.box(3000, 3000, 3000);
+
+    g.popStyle();
+    g.popMatrix();
   }
 
   private void drawSun(Sim sim, PGraphics g, float t) {

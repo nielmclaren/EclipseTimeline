@@ -102,11 +102,20 @@ class CameraSetting {
   }
 
   CameraSetting merged(CameraSetting v) {
-    return new CameraSetting()
-      .yaw(_hasYaw ? _yaw : v.yaw())
-      .pitch(_hasPitch ? _pitch : v.pitch())
-      .roll(_hasRoll ? _roll : v.roll())
-      .dist(_hasDist ? _dist : v.dist())
-      .lookAt(v.lookAt());
+    CameraSetting setting = clone();
+    if (v.hasYaw()) {
+      setting.yaw(v.yaw());
+    }
+    if (v.hasPitch()) {
+      setting.pitch(v.pitch());
+    }
+    if (v.hasRoll()) {
+      setting.roll(v.roll());
+    }
+    if (v.hasDist()) {
+      setting.dist(v.dist());
+    }
+    setting.lookAt(v.lookAt());
+    return setting;
   }
 }

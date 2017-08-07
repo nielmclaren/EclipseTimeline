@@ -43,20 +43,23 @@ class Cues {
   }
 
   Cues introSynodicMonth(long durationMs) {
+    sceneDefault();
     _sim
       .moonMajorAxis(550)
       .moonMinorAxis(550)
       .lunarOrbitInclineRad(0);
     _renderer
+      .showLunarApsides(false)
       .showSun(true)
       .showPlanetOrbit(true)
       .showSunPlanetLine(true);
 
-    planetOverhead(durationMs);
+    planetOverheadRelativeToSun(durationMs);
     return this;
   }
 
   Cues introAnomalisticMonth(long durationMs) {
+    sceneDefault();
     _sim
       .apsidalPrecessionPeriod(9)
       .moonMajorAxis(600)
@@ -66,7 +69,7 @@ class Cues {
       .showLunarApsides(true)
       .showSun(false)
       .showPlanetOrbit(false)
-      .showSunPlanetLine(true);
+      .showSunPlanetLine(false);
 
     planetOverhead(durationMs);
     return this;
@@ -123,6 +126,11 @@ class Cues {
     return this;
   }
 
+  Cues planetOverheadRelativeToSun(long durationMs) {
+    _cam.followPlanetOverheadRelativeToSun(durationMs);
+    return this;
+  }
+
   Cues spmClean() {
     _renderer.showSunPlanetLine(false);
     return this;
@@ -142,6 +150,7 @@ class Cues {
       .moonRadius(50);
     _renderer
       .showLunarApsides(false)
+      .showOrientationCues(true)
       .showPlanetOrbit(true)
       .showSun(true)
       .showSunPlanetLine(false);

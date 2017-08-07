@@ -4,6 +4,7 @@ class CameraController {
   private final int FOLLOW_NONE = 0;
   private final int FOLLOW_PLANET_EXTERNAL = 1;
   private final int FOLLOW_PLANET_OVERHEAD = 2;
+  private final int FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN = 3;
 
   private Sim _sim;
   private PeasyCam _cam;
@@ -19,6 +20,7 @@ class CameraController {
   private long _startTime;
 
   private int _followMode;
+  private boolean _isLockedOnPlanetOverhead;
 
   CameraController(Sim sim, PeasyCam cam) {
     _sim = sim;
@@ -35,6 +37,7 @@ class CameraController {
     _startTime = 0;
 
     _followMode = FOLLOW_NONE;
+    _isLockedOnPlanetOverhead = false;
   }
 
   CameraController animateTo(CameraSetting setting, long durationMs) {
@@ -46,6 +49,7 @@ class CameraController {
       setCompletedAnimationProperties();
     }
     _followMode = FOLLOW_NONE;
+    _isLockedOnPlanetOverhead = false;
     return this;
   }
 
@@ -60,6 +64,14 @@ class CameraController {
   CameraController followPlanetOverhead(long durationMs) {
     if (_followMode != FOLLOW_PLANET_OVERHEAD) {
       _followMode = FOLLOW_PLANET_OVERHEAD;
+      setInitialAnimationProperties(durationMs);
+    }
+    return this;
+  }
+
+  CameraController followPlanetOverheadRelativeToSun(long durationMs) {
+    if (_followMode != FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN) {
+      _followMode = FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN;
       setInitialAnimationProperties(durationMs);
     }
     return this;
@@ -101,7 +113,7 @@ class CameraController {
 
   private void updateFollow(float t, int followMode) {
     CameraSetting setting = getFollowCameraSetting(t, followMode);
-    _current = setting;
+    _current = _current.merged(setting);
   }
 
   private CameraSetting getFollowCameraSetting(float t, int followMode) {
@@ -110,13 +122,15 @@ class CameraController {
         return getFollowPlanetExternalCameraSetting(t);
       case FOLLOW_PLANET_OVERHEAD:
         return getFollowPlanetOverheadCameraSetting(t);
+      case FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN:
+        return getFollowPlanetOverheadRelativeToSunCameraSetting(t);
       default:
         return new CameraSetting();
     }
   }
 
   private CameraSetting getFollowPlanetExternalCameraSetting(float t) {
-    float planetRotation = HALF_PI + _sim.getPlanetRotation(t);
+    float planetRotation = normalizeAngle(HALF_PI + _sim.getPlanetRotation(t));
     return new CameraSetting()
       .yaw(planetRotation)
       .pitch(radians(15))
@@ -127,11 +141,19 @@ class CameraController {
 
   private CameraSetting getFollowPlanetOverheadCameraSetting(float t) {
     PVector planetPos = _sim.getPlanetPosition(t);
+    float planetRotation = normalizeAngle(HALF_PI + _sim.getPlanetRotation(t));
+    return new CameraSetting()
+      .pitch(HALF_PI)
+      .dist(_sim.moonMajorAxis() * 1.4)
+      .lookAt(planetPos);
+  }
+
+  private CameraSetting getFollowPlanetOverheadRelativeToSunCameraSetting(float t) {
+    PVector planetPos = _sim.getPlanetPosition(t);
     float planetRotation = HALF_PI + _sim.getPlanetRotation(t);
     return new CameraSetting()
       .yaw(planetRotation)
       .pitch(HALF_PI)
-      .roll(-planetRotation)
       .dist(_sim.moonMajorAxis() * 1.4)
       .lookAt(planetPos);
   }
@@ -139,14 +161,21 @@ class CameraController {
   private void updateAnimation() {
     float u = (millis() - _startTime) / _durationMs;
     if (u > 0.9999) {
-      _current = _target.merged(_current);
+      _current = _current.merged(_target);
       setCompletedAnimationProperties();
+      _isLockedOnPlanetOverhead = isFollowPlanetOverhead();
     } else {
       if (_yawDirection == 0) {
         _yawDirection = getDirection(_start.yaw(), _target.yaw());
       }
 
-      PVector lookAt = PVector.lerp(_start.lookAt(), _target.lookAt(), u);
+      PVector lookAt;
+      if (isFollowPlanetOverhead() && _isLockedOnPlanetOverhead) {
+        lookAt = _target.lookAt();
+      } else {
+        lookAt = PVector.lerp(_start.lookAt(), _target.lookAt(), u);
+      }
+
       _current = new CameraSetting()
         .yaw(_target.hasYaw() ? lerpAngle(_start.yaw(), _target.yaw(), u, _yawDirection) : _current.yaw())
         .pitch(_target.hasPitch() ? lerpAngle(_start.pitch(), _target.pitch(), u) : _current.pitch())
@@ -155,6 +184,17 @@ class CameraController {
         .lookAt(lookAt);
     }
     updateCamera();
+  }
+
+  private boolean isFollowPlanetOverhead() {
+    switch (_followMode) {
+      case FOLLOW_PLANET_OVERHEAD:
+      case FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN:
+        return true;
+      
+      default:
+        return false;
+    }
   }
 
   private float lerpAngle(float a, float b, float amount) {
