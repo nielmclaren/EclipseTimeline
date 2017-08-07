@@ -31,4 +31,11 @@ class CameraSetting {
   CameraSetting clone() {
     return new CameraSetting(_yaw, _pitch, _dist);
   }
+
+  CameraSetting merged(CameraSetting v) {
+    return new CameraSetting(
+      _yaw >= 0 ? _yaw : v.yaw(),
+      _pitch >= 0 ? _pitch : v.pitch(),
+      _dist >= 0 ? _dist : v.dist());
+  }
 }
