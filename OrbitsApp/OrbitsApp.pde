@@ -2,9 +2,13 @@
 import controlP5.*;
 import peasy.*;
 
+PGraphics buffer;
+
 Sim sim;
 PeasyCam cam;
 Renderer renderer;
+Cues cues;
+
 float time;
 
 ControlP5 cp5;
@@ -12,13 +16,18 @@ Slider lunarOrbitInclineInput;
 
 FileNamer fileNamer;
 
-PGraphics buffer;
 
 void setup() {
   size(800, 800, P3D);
 
+  buffer = createGraphics(width, height, P3D);
+
   sim = new Sim();
+  cam = new PeasyCam(this, buffer, 12000);
   renderer = new Renderer();
+  cues = new Cues(sim, cam, renderer);
+  cues.semExternalView(2000);
+
   time = 0;
   
   cp5 = new ControlP5(this);
@@ -29,15 +38,11 @@ void setup() {
     .setPosition(20, 20);
 
   fileNamer = new FileNamer("output/frame", "png");
-
-  buffer = createGraphics(width, height, P3D);
-  cam = new PeasyCam(this, buffer, 12000);
-
-  cam.setMinimumDistance(500);
-  cam.setMaximumDistance(5000);
 }
 
 void draw() {
+  cues.update(time);
+
   buffer.beginDraw();
   setupLight(buffer);
   renderer.draw(sim, buffer, time);
@@ -79,6 +84,15 @@ void saveAnimation() {
 
 void keyReleased() {
   switch (key) {
+    case '1':
+      cues.semExternalView(2000);
+      break;
+    case '2':
+      cues.semSideView(2000);
+      break;
+    case '3':
+      cues.planetExternal(2000);
+      break;
     case 'a':
       saveAnimation();
       break;
