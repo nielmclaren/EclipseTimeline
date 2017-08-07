@@ -27,4 +27,8 @@ class CameraSetting {
   float dist() {
     return _dist;
   }
+  
+  CameraSetting clone() {
+    return new CameraSetting(_yaw, _pitch, _dist);
+  }
 }

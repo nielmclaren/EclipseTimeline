@@ -11,17 +11,9 @@ class Cues {
 
   private final Vector3D _center;
 
-  private float _yaw;
-  private float _pitch;
-  private float _dist;
-
-  private float _startYaw;
-  private float _startPitch;
-  private float _startDist;
-
-  private float _targetYaw;
-  private float _targetPitch;
-  private float _targetDist;
+  private CameraSetting _current;
+  private CameraSetting _start;
+  private CameraSetting _target;
 
   private float _durationMs;
   private long _startTime;
@@ -35,17 +27,9 @@ class Cues {
 
     _center = new Vector3D(0, 0, 0);
 
-    _yaw = 0;
-    _pitch = 0;
-    _dist = 0;
-
-    _startYaw = 0;
-    _startPitch = 0;
-    _startDist = 0;
-
-    _targetYaw = 0;
-    _targetPitch = 0;
-    _targetDist = 0;
+    _current = new CameraSetting();
+    _start = null;
+    _target = null;
 
     _durationMs = 0;
     _startTime = 0;
@@ -82,38 +66,23 @@ class Cues {
 
   private void animateTo(CameraSetting setting, long durationMs) {
     if (durationMs > 0) {
-      _targetYaw = setting.yaw();
-      _targetPitch = setting.pitch();
-      _targetDist = setting.dist();
-
+      _target = setting;
       setInitialAnimationProperties(durationMs);
     } else {
-      _yaw = setting.yaw();
-      _pitch = setting.pitch();
-      _dist = setting.dist();
-
+      _current = setting;
       setCompletedAnimationProperties();
     }
   }
 
   private void setInitialAnimationProperties(long durationMs) {
-    _startYaw = _yaw;
-    _startPitch = _pitch;
-    _startDist = _dist;
-
+    _start = _current.clone();
     _durationMs = durationMs;
     _startTime = millis();
   }
 
   private void setCompletedAnimationProperties() {
-    _startYaw = 0;
-    _startPitch = 0;
-    _startDist = 0;
-
-    _targetYaw = 0;
-    _targetPitch = 0;
-    _targetDist = 0;
-
+    _start = null;
+    _target = null;
     _durationMs = 0;
     _startTime = 0;
   }
@@ -135,16 +104,12 @@ class Cues {
 
   private void updateFollowTarget(float t, int followMode) {
     CameraSetting setting = getFollowCameraSetting(t, followMode);
-    _targetYaw = setting.yaw();
-    _targetPitch = setting.pitch();
-    _targetDist = setting.dist();
+    _target = setting;
   }
 
   private void updateFollow(float t, int followMode) {
     CameraSetting setting = getFollowCameraSetting(t, followMode);
-    _yaw = setting.yaw();
-    _pitch = setting.pitch();
-    _dist = setting.dist();
+    _current = setting;
   }
 
   private CameraSetting getFollowCameraSetting(float t, int followMode) {
@@ -162,21 +127,21 @@ class Cues {
   private void updateAnimation() {
     float u = (millis() - _startTime) / _durationMs;
     if (u > 0.99) {
-      _yaw = _targetYaw;
-      _pitch = _targetPitch;
-      _dist = _targetDist;
-
+      _current = _target.clone();
       setCompletedAnimationProperties();
     } else {
-      _yaw = _startYaw + u * getAngleBetween(_startYaw, _targetYaw);
-      _pitch = _startPitch + u * getAngleBetween(_startPitch, _targetPitch);
-      _dist = _startDist + u * (_targetDist - _startDist);
+      _current = new CameraSetting(
+        _start.yaw() + u * getAngleBetween(_start.yaw(), _target.yaw()),
+        _start.pitch() + u * getAngleBetween(_start.pitch(), _target.pitch()),
+        _start.dist() + u * (_target.dist() - _start.dist()));
     }
     updateCamera();
   }
 
   private void updateCamera() {
-    _cam.setState(new CameraState(new Rotation(RotationOrder.YXZ, _yaw, _pitch, 0), _center, _dist), 0);
+    _cam.setState(new CameraState(
+      new Rotation(RotationOrder.YXZ, _current.yaw(), _current.pitch(), 0),
+      _center, _current.dist()), 0);
   }
 
   private float getAngleBetween(float a, float b) {
