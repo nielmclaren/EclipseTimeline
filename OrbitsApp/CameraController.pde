@@ -14,6 +14,7 @@ class CameraController {
   private CameraSetting _start;
   private CameraSetting _target;
 
+  private int _yawDirection;
   private float _durationMs;
   private long _startTime;
 
@@ -29,6 +30,7 @@ class CameraController {
     _start = null;
     _target = null;
 
+    _yawDirection = 0;
     _durationMs = 0;
     _startTime = 0;
 
@@ -47,20 +49,23 @@ class CameraController {
     return this;
   }
 
-  CameraController followPlanetExternal(long durationMs) {
-    setInitialAnimationProperties(durationMs);
+  CameraController followPlanetExternal(float t, long durationMs) {
     _followMode = FOLLOW_PLANET_EXTERNAL;
+    updateFollowTarget(t, _followMode);
+    setInitialAnimationProperties(durationMs);
     return this;
   }
 
-  CameraController followPlanetOverhead(long durationMs) {
-    setInitialAnimationProperties(durationMs);
+  CameraController followPlanetOverhead(float t, long durationMs) {
     _followMode = FOLLOW_PLANET_OVERHEAD;
+    updateFollowTarget(t, _followMode);
+    setInitialAnimationProperties(durationMs);
     return this;
   }
 
   private void setInitialAnimationProperties(long durationMs) {
     _start = _current.clone();
+    _yawDirection = getDirection(_start.yaw(), _target.yaw());
     _durationMs = durationMs;
     _startTime = millis();
   }
@@ -123,12 +128,25 @@ class CameraController {
     } else {
       PVector lookAt = PVector.lerp(_start.lookAt(), _target.lookAt(), u);
       _current = new CameraSetting(
-        _target.yaw() >= 0 ? _start.yaw() + u * getAngleBetween(_start.yaw(), _target.yaw()) : _current.yaw(),
-        _target.pitch() >= 0 ? _start.pitch() + u * getAngleBetween(_start.pitch(), _target.pitch()) : _current.pitch(),
+        _target.yaw() >= 0 ? lerpAngle(_start.yaw(), _target.yaw(), u, _yawDirection) : _current.yaw(),
+        _target.pitch() >= 0 ? lerpAngle(_start.pitch(), _target.pitch(), u) : _current.pitch(),
         _target.dist() >= 0 ? _start.dist() + u * (_target.dist() - _start.dist()) : _current.dist(),
         lookAt);
    }
     updateCamera();
+  }
+
+  private float lerpAngle(float a, float b, float amount) {
+    return normalizeAngle(a + amount * getSignedAngleBetween(a, b));
+  }
+
+  private float lerpAngle(float a, float b, float amount, int direction) {
+    return normalizeAngle(a + amount * getSignedAngleBetweenInDirection(a, b, direction));
+  }
+
+  private float normalizeAngle(float v) {
+    while (v < 0) v += 2 * PI;
+    return v % (2 * PI);
   }
 
   private void updateCamera() {
@@ -141,7 +159,12 @@ class CameraController {
     return new Vector3D(v.x, v.y, v.z);
   }
 
-  private float getAngleBetween(float a, float b) {
+  private int getDirection(float a, float b) {
+    float delta = getSignedAngleBetween(a, b);
+    return floor(abs(delta) / delta);
+  }
+
+  private float getSignedAngleBetween(float a, float b) {
     float delta = b - a;
     if (abs(delta) > PI) {
       if (delta > 0) {
@@ -150,5 +173,12 @@ class CameraController {
       return 2 * PI + delta;
     }
     return delta;
+  }
+  
+  private float getSignedAngleBetweenInDirection(float a, float b, int direction) {
+    if (b > a == direction > 0) {
+      return b - a;
+    }
+    return direction * 2 * PI + b - a;
   }
 }
