@@ -9,11 +9,13 @@ PeasyCam cam;
 Renderer renderer;
 Cues cues;
 
+String[] sceneNames;
+String selectedSceneName;
+
 float time;
 
 ControlP5 cp5;
 Slider lunarOrbitInclineInput;
-String[] sceneNames;
 
 FileNamer fileNamer;
 
@@ -28,7 +30,10 @@ void setup() {
   cam.setActive(false);
   renderer = new Renderer();
   cues = new Cues(sim, cam, renderer);
-  cues.spmExternalView(2000);
+
+  sceneNames = new String[]{"intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  selectedSceneName = "";
+  cueScene(sceneNames[0]);
 
   time = 0;
   
@@ -40,7 +45,7 @@ void setup() {
 }
 
 void setupInputs() {
-  float currY = 20;
+  float currY = 40;
 
   lunarOrbitInclineInput = cp5.addSlider("lunarOrbitInclineInput")
     .setRange(0, 30)
@@ -48,7 +53,6 @@ void setupInputs() {
     .setPosition(20, currY);
   currY += 25;
   
-  sceneNames = new String[]{"intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   for (int i = 0; i < sceneNames.length; i++) {
     cp5.addButton(sceneNames[i])
       .setPosition(20, currY)
@@ -66,6 +70,7 @@ void draw() {
   buffer.endDraw();
 
   image(buffer, 0, 0);
+  text(selectedSceneName, 20, 20);
 
   time += 0.001;
 }
@@ -97,19 +102,12 @@ void saveAnimation() {
 }
 
 void keyReleased() {
+  int keyNum = key - '0';
+  if (keyNum < 10 && keyNum < sceneNames.length) {
+    cueScene(sceneNames[keyNum]);
+  }
+
   switch (key) {
-    case '1':
-      cues.spmExternalView(2000);
-      break;
-    case '2':
-      cues.spmOverhead(2000);
-      break;
-    case '3':
-      cues.planetExternal(2000);
-      break;
-    case '4':
-      cues.planetOverhead(2000);
-      break;
     case 'a':
       saveAnimation();
       break;
@@ -128,7 +126,12 @@ void controlEvent(ControlEvent e) {
   sceneNames = new String[]{"intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   for (int i = 0; i < sceneNames.length; i++) {
     if (e.isFrom(cp5.getController(sceneNames[i]))) {
-      cues.cue(sceneNames[i]);
+      cueScene(sceneNames[i]);
     }
   }
+}
+
+void cueScene(String sceneName) {
+  cues.cue(sceneName);
+  selectedSceneName = sceneName;
 }
