@@ -3,6 +3,8 @@ import controlP5.*;
 import peasy.*;
 
 Sim sim;
+PeasyCam cam;
+Renderer renderer;
 float time;
 
 ControlP5 cp5;
@@ -12,12 +14,11 @@ FileNamer fileNamer;
 
 PGraphics buffer;
 
-PeasyCam cam;
-
 void setup() {
   size(800, 800, P3D);
 
   sim = new Sim();
+  renderer = new Renderer();
   time = 0;
   
   cp5 = new ControlP5(this);
@@ -31,7 +32,7 @@ void setup() {
 
   buffer = createGraphics(width, height, P3D);
   cam = new PeasyCam(this, buffer, 12000);
-  
+
   cam.setMinimumDistance(500);
   cam.setMaximumDistance(5000);
 }
@@ -39,7 +40,7 @@ void setup() {
 void draw() {
   buffer.beginDraw();
   setupLight(buffer);
-  sim.draw(buffer, time);
+  renderer.draw(sim, buffer, time);
   buffer.endDraw();
 
   image(buffer, 0, 0);
@@ -67,7 +68,7 @@ void saveAnimation() {
     float t = (float)i / numFrames;
     buffer.beginDraw();
     setupLight(buffer);
-    sim.draw(buffer, t);
+    renderer.draw(sim, buffer, t);
     buffer.endDraw();
 
     image(buffer, 0, 0);

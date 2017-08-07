@@ -24,6 +24,51 @@ class Sim {
     _moonRadius = 50;
   }
 
+  float sunRadius() {
+    return _sunRadius;
+  }
+
+  Sim sunRadius(float v) {
+    _sunRadius = v;
+    return this;
+  }
+
+  float planetOrbitDist() {
+    return _planetOrbitDist;
+  }
+
+  Sim planetOrbitDist(float v) {
+    _planetOrbitDist = v;
+    return sim;
+  }
+
+  float planetRadius() {
+    return _planetRadius;
+  }
+
+  Sim planetRadius(float v) {
+    _planetRadius = v;
+    return this;
+  }
+
+  float moonMajorAxis() {
+    return _moonMajorAxis;
+  }
+
+  Sim moonMajorAxis(float v) {
+    _moonMajorAxis = v;
+    return this;
+  }
+
+  float moonMinorAxis() {
+    return _moonMinorAxis;
+  }
+
+  Sim moonMinorAxis(float v) {
+    _moonMinorAxis = v;
+    return this;
+  }
+
   float lunarOrbitInclineRad() {
     return _lunarOrbitInclineRad;
   }
@@ -33,138 +78,33 @@ class Sim {
     return this;
   }
 
-  void draw(PGraphics g, float t) {
-    drawBackground(g);
-    drawSun(g, t);
-    drawPlanetOrbit(g, t);
-    drawSunPlanetLine(g, t);
-    drawPlanet(g, t);
-    drawMoonOrbit(g, t);
-    drawMoon(g, t);
+  float apsidalPrecessionPeriod() {
+    return _apsidalPrecessionPeriod;
   }
 
-  private void drawBackground(PGraphics g) {
-    g.background(0);
+  Sim apsidalPrecessionPeriod(float v) {
+    _apsidalPrecessionPeriod = v;
+    return this;
   }
 
-  private void drawSun(PGraphics g, float t) {
-    g.pushMatrix();
-    g.pushStyle();
-    
-    g.noFill();
-    g.stroke(_lineColor0);
-    g.strokeWeight(1);
-    g.sphereDetail(20);
-    g.sphere(_sunRadius);
-
-    g.popStyle();
-    g.popMatrix();
+  float moonRadius() {
+    return _moonRadius;
   }
 
-  private void drawPlanetOrbit(PGraphics g, float t) {
-    PVector planetPos = getPlanetPosition(t);
-
-    g.pushMatrix();
-    g.pushStyle();
-    
-    g.noFill();
-    g.stroke(_lineColor0);
-    g.strokeWeight(1);
-    g.ellipseMode(RADIUS);
-
-    g.rotateX(PI/2);
-    g.ellipse(0, 0, _planetOrbitDist, _planetOrbitDist);
-
-    g.popStyle();
-    g.popMatrix();
+  Sim moonRadius(float v) {
+    _moonRadius = v;
+    return this;
   }
 
-  private void drawSunPlanetLine(PGraphics g, float t) {
-    PVector planetPos = getPlanetPosition(t);
-
-    g.pushMatrix();
-    g.pushStyle();
-    
-    g.noFill();
-    g.stroke(_lineColor0);
-    g.strokeWeight(1);
-
-    g.line(0, 0, 0, planetPos.x, planetPos.y, planetPos.z);
-
-    g.popStyle();
-    g.popMatrix();
-  }
-
-  private void drawPlanet(PGraphics g, float t) {
-    PVector planetPos = getPlanetPosition(t);
-
-    g.pushMatrix();
-    g.translate(planetPos.x, planetPos.y, planetPos.z);
-
-    g.pushStyle();
-    g.noFill();
-    g.stroke(_lineColor1);
-
-    g.sphereDetail(12);
-    g.sphere(_planetRadius);
-    
-    g.popStyle();
-    g.popMatrix();
-  }
-
-  private void drawMoonOrbit(PGraphics g, float t) {
-    PVector planetPos = getPlanetPosition(t);
-
-    float a = _moonMajorAxis / 2;
-    float b = _moonMinorAxis / 2;
-    float c = sqrt(a * a - b * b);
-
-    g.pushMatrix();
-
-    g.pushStyle();
-    g.noFill();
-    g.stroke(_lineColor0);
-    g.strokeWeight(1);
-
-    g.translate(planetPos.x, planetPos.y, planetPos.z);
-    g.rotateX(PI/2);
-    g.rotateX(_lunarOrbitInclineRad);
-    g.rotateZ(-t * 2 * PI);
-    g.translate(c, 0);
-    g.ellipse(0, 0, _moonMajorAxis, _moonMinorAxis);
-
-    g.popStyle();
-
-    g.popMatrix();
-  }
-
-  private void drawMoon(PGraphics g, float t) {
-    PVector planetPos = getPlanetPosition(t);
-    PVector moonPos = getMoonPosition(t);
-    
-    g.pushMatrix();
-    g.pushStyle();
-
-    g.translate(moonPos.x, moonPos.y, moonPos.z);
-    
-    g.stroke(_lineColor0);
-    g.noFill();
-    g.sphereDetail(8);
-    g.sphere(_moonRadius);
-    
-    g.popStyle();
-    g.popMatrix();
-  }
-
-  private float getPlanetRotation(float t) {
+  float getPlanetRotation(float t) {
     return map(t, 0, 1, 0, 2 * PI);
   }
 
-  private float getMoonRotation(float t) {
+  float getMoonRotation(float t) {
     return map(t, 0, 1, 0, 12 * 2 * PI);
   }
 
-  private PVector getPlanetPosition(float t) {
+  PVector getPlanetPosition(float t) {
     float rotation = getPlanetRotation(t);
     
     PVector pos = new PVector();
@@ -174,12 +114,12 @@ class Sim {
     return pos;
   }
 
-  private PVector getMoonPosition(float t) {
+  PVector getMoonPosition(float t) {
     float u = (t * _apsidalPrecessionPeriod) % 1;
     return getMoonPosition(t, u);
   }
 
-  private PVector getMoonPosition(float t, float u) {
+  PVector getMoonPosition(float t, float u) {
     PVector planetPos = getPlanetPosition(t);
     
     float a = _moonMajorAxis / 2;
