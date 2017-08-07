@@ -1,9 +1,6 @@
 import peasy.org.apache.commons.math.geometry.*;
 
 class Cues {
-  private final int FOLLOW_NONE = 0;
-  private final int FOLLOW_PLANET_EXTERNAL = 1;
-
   private Sim _sim;
   private CameraController _cam;
   private Renderer _renderer;
