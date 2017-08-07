@@ -13,6 +13,7 @@ float time;
 
 ControlP5 cp5;
 Slider lunarOrbitInclineInput;
+String[] sceneNames;
 
 FileNamer fileNamer;
 
@@ -27,18 +28,33 @@ void setup() {
   cam.setActive(false);
   renderer = new Renderer();
   cues = new Cues(sim, cam, renderer);
-  cues.semExternalView(2000);
+  cues.spmExternalView(2000);
 
   time = 0;
   
   cp5 = new ControlP5(this);
   
+  setupInputs();
+
+  fileNamer = new FileNamer("output/frame", "png");
+}
+
+void setupInputs() {
+  float currY = 20;
+
   lunarOrbitInclineInput = cp5.addSlider("lunarOrbitInclineInput")
     .setRange(0, 30)
     .setValue(20)
-    .setPosition(20, 20);
-
-  fileNamer = new FileNamer("output/frame", "png");
+    .setPosition(20, currY);
+  currY += 25;
+  
+  sceneNames = new String[]{"intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  for (int i = 0; i < sceneNames.length; i++) {
+    cp5.addButton(sceneNames[i])
+      .setPosition(20, currY)
+      .setWidth(120);
+    currY += 25;
+  }
 }
 
 void draw() {
@@ -52,9 +68,6 @@ void draw() {
   image(buffer, 0, 0);
 
   time += 0.001;
-  while (time > 1) {
-    time -= 1;
-  }
 }
 
 void setupLight(PGraphics g) {
@@ -86,10 +99,10 @@ void saveAnimation() {
 void keyReleased() {
   switch (key) {
     case '1':
-      cues.semExternalView(2000);
+      cues.spmExternalView(2000);
       break;
     case '2':
-      cues.semOverhead(2000);
+      cues.spmOverhead(2000);
       break;
     case '3':
       cues.planetExternal(2000);
@@ -111,4 +124,11 @@ void controlEvent(ControlEvent e) {
     float v = cp5.getController("lunarOrbitInclineInput").getValue();
     sim.lunarOrbitInclineRad(radians(v));
   }  
+
+  sceneNames = new String[]{"intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  for (int i = 0; i < sceneNames.length; i++) {
+    if (e.isFrom(cp5.getController(sceneNames[i]))) {
+      cues.cue(sceneNames[i]);
+    }
+  }
 }

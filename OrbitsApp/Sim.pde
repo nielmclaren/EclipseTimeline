@@ -3,23 +3,23 @@ class Sim {
   private float _sunRadius;
   private float _planetOrbitDist;
   private float _planetRadius;
+  private float _dayPeriod;
   private float _moonMajorAxis;
   private float _moonMinorAxis;
   private float _lunarOrbitInclineRad;
+  private float _lunarOrbitPeriod;
   private float _apsidalPrecessionPeriod;
   private float _moonRadius;
-
-  private color _lineColor0 = color(83, 80, 230);
-  private color _lineColor1 = color(175, 209, 252);
-  private color _lineColor2 = color(17, 5, 78);
 
   Sim() {
     _sunRadius = 500;
     _planetOrbitDist = 1800;
     _planetRadius = 100;
+    _dayPeriod = 1. / 365.25;
     _moonMajorAxis = 600;
     _moonMinorAxis = 550;
     _lunarOrbitInclineRad = radians(20);//radians(5.1);
+    _lunarOrbitPeriod = 1. / 12;
     _apsidalPrecessionPeriod = 9;
     _moonRadius = 50;
   }
@@ -51,6 +51,15 @@ class Sim {
     return this;
   }
 
+  float dayPeriod() {
+    return _dayPeriod;
+  }
+
+  Sim dayPeriod(float v) {
+    _dayPeriod = v;
+    return this;
+  }
+
   float moonMajorAxis() {
     return _moonMajorAxis;
   }
@@ -78,6 +87,15 @@ class Sim {
     return this;
   }
 
+  float lunarOrbitPeriod() {
+    return _lunarOrbitPeriod;
+  }
+
+  Sim lunarOrbitPeriod(float v) {
+    _lunarOrbitPeriod = v;
+    return this;
+  }
+
   float apsidalPrecessionPeriod() {
     return _apsidalPrecessionPeriod;
   }
@@ -97,11 +115,7 @@ class Sim {
   }
 
   float getPlanetRotation(float t) {
-    return map(t, 0, 1, 0, 2 * PI);
-  }
-
-  float getMoonRotation(float t) {
-    return map(t, 0, 1, 0, 12 * 2 * PI);
+    return map(t % 1, 0, 1, 0, 2 * PI);
   }
 
   PVector getPlanetPosition(float t) {
@@ -115,23 +129,20 @@ class Sim {
   }
 
   PVector getMoonPosition(float t) {
-    float u = (t * _apsidalPrecessionPeriod) % 1;
-    return getMoonPosition(t, u);
-  }
-
-  PVector getMoonPosition(float t, float u) {
     PVector planetPos = getPlanetPosition(t);
+    float apsidalPrecessionTime = t / _apsidalPrecessionPeriod;
+    float lunarOrbitTime = t / _lunarOrbitPeriod;
     
     float a = _moonMajorAxis / 2;
     float b = _moonMinorAxis / 2;
     float c = sqrt(a * a - b * b);
 
-    float x = c + a * cos(u * 2 * PI);
-    float z = b * sin(u * 2 * PI);
+    float x = c + a * cos(lunarOrbitTime * 2 * PI);
+    float y = b * sin(lunarOrbitTime * 2 * PI);
 
     PVector pos = new PVector(
-      x * cos(-t * 2 * PI) + z * sin(-t * 2 * PI),
-      x * sin(-t * 2 * PI) - z * cos(-t * 2 * PI),
+      x * cos(-apsidalPrecessionTime * 2 * PI) + y * sin(-apsidalPrecessionTime * 2 * PI),
+      x * sin(-apsidalPrecessionTime * 2 * PI) - y * cos(-apsidalPrecessionTime * 2 * PI),
       0);
 
     pos = ThreeDee.rotateX(pos, _lunarOrbitInclineRad);

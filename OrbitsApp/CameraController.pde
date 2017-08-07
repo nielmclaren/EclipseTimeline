@@ -50,14 +50,18 @@ class CameraController {
   }
 
   CameraController followPlanetExternal(long durationMs) {
-    _followMode = FOLLOW_PLANET_EXTERNAL;
-    setInitialAnimationProperties(durationMs);
+    if (_followMode != FOLLOW_PLANET_EXTERNAL) {
+      _followMode = FOLLOW_PLANET_EXTERNAL;
+      setInitialAnimationProperties(durationMs);
+    }
     return this;
   }
 
   CameraController followPlanetOverhead(long durationMs) {
-    _followMode = FOLLOW_PLANET_OVERHEAD;
-    setInitialAnimationProperties(durationMs);
+    if (_followMode != FOLLOW_PLANET_OVERHEAD) {
+      _followMode = FOLLOW_PLANET_OVERHEAD;
+      setInitialAnimationProperties(durationMs);
+    }
     return this;
   }
 
@@ -110,7 +114,7 @@ class CameraController {
       case FOLLOW_PLANET_OVERHEAD:
         PVector planetPos = _sim.getPlanetPosition(t);
         return new CameraSetting(
-          HALF_PI + _sim.getPlanetRotation(t), HALF_PI, _sim.moonMajorAxis() * 2.2,
+          HALF_PI + _sim.getPlanetRotation(t), HALF_PI, _sim.moonMajorAxis() * 1.4,
           planetPos);
 
       default:
