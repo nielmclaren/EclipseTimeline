@@ -107,19 +107,33 @@ class CameraController {
   private CameraSetting getFollowCameraSetting(float t, int followMode) {
     switch (followMode) {
       case FOLLOW_PLANET_EXTERNAL:
-        return new CameraSetting(
-          HALF_PI + _sim.getPlanetRotation(t), radians(15), _sim.planetOrbitDist() * 2.2,
-          _center);
-
+        return getFollowPlanetExternalCameraSetting(t);
       case FOLLOW_PLANET_OVERHEAD:
-        PVector planetPos = _sim.getPlanetPosition(t);
-        return new CameraSetting(
-          HALF_PI + _sim.getPlanetRotation(t), HALF_PI, _sim.moonMajorAxis() * 1.4,
-          planetPos);
-
+        return getFollowPlanetOverheadCameraSetting(t);
       default:
         return new CameraSetting();
     }
+  }
+
+  private CameraSetting getFollowPlanetExternalCameraSetting(float t) {
+    float planetRotation = HALF_PI + _sim.getPlanetRotation(t);
+    return new CameraSetting()
+      .yaw(planetRotation)
+      .pitch(radians(15))
+      .roll(0)
+      .dist(_sim.planetOrbitDist() * 2.2)
+      .lookAt(_center);
+  }
+
+  private CameraSetting getFollowPlanetOverheadCameraSetting(float t) {
+    PVector planetPos = _sim.getPlanetPosition(t);
+    float planetRotation = HALF_PI + _sim.getPlanetRotation(t);
+    return new CameraSetting()
+      .yaw(planetRotation)
+      .pitch(HALF_PI)
+      .roll(-planetRotation)
+      .dist(_sim.moonMajorAxis() * 1.4)
+      .lookAt(planetPos);
   }
 
   private void updateAnimation() {
@@ -133,12 +147,13 @@ class CameraController {
       }
 
       PVector lookAt = PVector.lerp(_start.lookAt(), _target.lookAt(), u);
-      _current = new CameraSetting(
-        _target.yaw() >= 0 ? lerpAngle(_start.yaw(), _target.yaw(), u, _yawDirection) : _current.yaw(),
-        _target.pitch() >= 0 ? lerpAngle(_start.pitch(), _target.pitch(), u) : _current.pitch(),
-        _target.dist() >= 0 ? _start.dist() + u * (_target.dist() - _start.dist()) : _current.dist(),
-        lookAt);
-   }
+      _current = new CameraSetting()
+        .yaw(_target.hasYaw() ? lerpAngle(_start.yaw(), _target.yaw(), u, _yawDirection) : _current.yaw())
+        .pitch(_target.hasPitch() ? lerpAngle(_start.pitch(), _target.pitch(), u) : _current.pitch())
+        .roll(_target.hasRoll() ? lerpAngle(_start.roll(), _target.roll(), u) : _current.roll())
+        .dist(_target.hasDist() ? _start.dist() + u * (_target.dist() - _start.dist()) : _current.dist())
+        .lookAt(lookAt);
+    }
     updateCamera();
   }
 
@@ -157,7 +172,8 @@ class CameraController {
 
   private void updateCamera() {
     Vector3D lookAt = toVector3D(_current.lookAt());
-    Rotation rotation = new Rotation(RotationOrder.YXZ, _current.yaw(), _current.pitch(), 0);
+    Rotation rotation = new Rotation(RotationOrder.YXZ,
+      _current.yaw(), _current.pitch(), _current.roll());
     _cam.setState(new CameraState(rotation, lookAt, _current.dist()), 0);
   }
 

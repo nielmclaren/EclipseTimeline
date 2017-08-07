@@ -87,17 +87,29 @@ class Cues {
   }
 
   Cues spmExternalView(long durationMs) {
-    _cam.animateTo(new CameraSetting(-1, radians(15), _sim.planetOrbitDist() * 2.2), durationMs);
+    CameraSetting setting = new CameraSetting()
+      .pitch(radians(15))
+      .roll(0)
+      .dist(_sim.planetOrbitDist() * 2.2);
+    _cam.animateTo(setting, durationMs);
     return this;
   }
 
   Cues spmSideView(long durationMs) {
-    _cam.animateTo(new CameraSetting(-1, 0, _sim.planetOrbitDist() * 2.2), durationMs);
+    CameraSetting setting = new CameraSetting()
+      .pitch(0)
+      .roll(0)
+      .dist(_sim.planetOrbitDist() * 2.2);
+    _cam.animateTo(setting, durationMs);
     return this;
   }
 
   Cues spmOverhead(long durationMs) {
-    _cam.animateTo(new CameraSetting(-1, HALF_PI, _sim.planetOrbitDist() * 2.2), durationMs);
+    CameraSetting setting = new CameraSetting()
+      .pitch(HALF_PI)
+      .roll(0)
+      .dist(_sim.planetOrbitDist() * 2.2);
+    _cam.animateTo(setting, durationMs);
     return this;
   }
 
