@@ -24,6 +24,7 @@ void setup() {
 
   sim = new Sim();
   cam = new PeasyCam(this, buffer, 12000);
+  cam.setActive(false);
   renderer = new Renderer();
   cues = new Cues(sim, cam, renderer);
   cues.semExternalView(2000);
@@ -88,10 +89,13 @@ void keyReleased() {
       cues.semExternalView(2000);
       break;
     case '2':
-      cues.semSideView(2000);
+      cues.semOverhead(2000);
       break;
     case '3':
       cues.planetExternal(2000);
+      break;
+    case '4':
+      cues.planetOverhead(2000);
       break;
     case 'a':
       saveAnimation();

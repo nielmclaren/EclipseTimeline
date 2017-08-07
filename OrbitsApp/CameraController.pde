@@ -3,11 +3,12 @@ import peasy.org.apache.commons.math.geometry.*;
 class CameraController {
   private final int FOLLOW_NONE = 0;
   private final int FOLLOW_PLANET_EXTERNAL = 1;
+  private final int FOLLOW_PLANET_OVERHEAD = 2;
 
   private Sim _sim;
   private PeasyCam _cam;
 
-  private final Vector3D _center;
+  private final PVector _center;
 
   private CameraSetting _current;
   private CameraSetting _start;
@@ -22,7 +23,7 @@ class CameraController {
     _sim = sim;
     _cam = cam;
 
-    _center = new Vector3D(0, 0, 0);
+    _center = new PVector(0, 0, 0);
 
     _current = new CameraSetting();
     _start = null;
@@ -49,6 +50,12 @@ class CameraController {
   CameraController followPlanetExternal(long durationMs) {
     setInitialAnimationProperties(durationMs);
     _followMode = FOLLOW_PLANET_EXTERNAL;
+    return this;
+  }
+
+  CameraController followPlanetOverhead(long durationMs) {
+    setInitialAnimationProperties(durationMs);
+    _followMode = FOLLOW_PLANET_OVERHEAD;
     return this;
   }
 
@@ -94,9 +101,15 @@ class CameraController {
     switch (followMode) {
       case FOLLOW_PLANET_EXTERNAL:
         return new CameraSetting(
-          PI/2 + _sim.getPlanetRotation(t),
-          radians(15),
-          _sim.planetOrbitDist() * 2.2);
+          HALF_PI + _sim.getPlanetRotation(t), radians(15), _sim.planetOrbitDist() * 2.2,
+          _center);
+
+      case FOLLOW_PLANET_OVERHEAD:
+        PVector planetPos = _sim.getPlanetPosition(t);
+        return new CameraSetting(
+          HALF_PI + _sim.getPlanetRotation(t), HALF_PI, _sim.moonMajorAxis() * 2.2,
+          planetPos);
+
       default:
         return new CameraSetting();
     }
@@ -104,22 +117,28 @@ class CameraController {
 
   private void updateAnimation() {
     float u = (millis() - _startTime) / _durationMs;
-    if (u > 0.99) {
+    if (u > 0.9999) {
       _current = _target.merged(_current);
       setCompletedAnimationProperties();
     } else {
+      PVector lookAt = PVector.lerp(_start.lookAt(), _target.lookAt(), u);
       _current = new CameraSetting(
         _target.yaw() >= 0 ? _start.yaw() + u * getAngleBetween(_start.yaw(), _target.yaw()) : _current.yaw(),
         _target.pitch() >= 0 ? _start.pitch() + u * getAngleBetween(_start.pitch(), _target.pitch()) : _current.pitch(),
-        _target.dist() >= 0 ? _start.dist() + u * (_target.dist() - _start.dist()) : _current.dist());
+        _target.dist() >= 0 ? _start.dist() + u * (_target.dist() - _start.dist()) : _current.dist(),
+        lookAt);
    }
     updateCamera();
   }
 
   private void updateCamera() {
-    _cam.setState(new CameraState(
-      new Rotation(RotationOrder.YXZ, _current.yaw(), _current.pitch(), 0),
-      _center, _current.dist()), 0);
+    Vector3D lookAt = toVector3D(_current.lookAt());
+    Rotation rotation = new Rotation(RotationOrder.YXZ, _current.yaw(), _current.pitch(), 0);
+    _cam.setState(new CameraState(rotation, lookAt, _current.dist()), 0);
+  }
+
+  private Vector3D toVector3D(PVector v) {
+    return new Vector3D(v.x, v.y, v.z);
   }
 
   private float getAngleBetween(float a, float b) {

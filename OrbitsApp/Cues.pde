@@ -24,8 +24,18 @@ class Cues {
     return this;
   }
 
+  Cues semOverhead(long durationMs) {
+    _cam.animateTo(new CameraSetting(-1, HALF_PI, _sim.planetOrbitDist() * 2.2), durationMs);
+    return this;
+  }
+
   Cues planetExternal(long durationMs) {
     _cam.followPlanetExternal(durationMs);
+    return this;
+  }
+
+  Cues planetOverhead(long durationMs) {
+    _cam.followPlanetOverhead(durationMs);
     return this;
   }
 
