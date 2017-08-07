@@ -27,7 +27,7 @@ void setup() {
   cam.setActive(false);
   renderer = new Renderer();
   cues = new Cues(sim, cam, renderer);
-  cues.semExternalView(time, 2000);
+  cues.semExternalView(2000);
 
   time = 0;
   
@@ -86,16 +86,16 @@ void saveAnimation() {
 void keyReleased() {
   switch (key) {
     case '1':
-      cues.semExternalView(time, 2000);
+      cues.semExternalView(2000);
       break;
     case '2':
-      cues.semOverhead(time, 2000);
+      cues.semOverhead(2000);
       break;
     case '3':
-      cues.planetExternal(time, 2000);
+      cues.planetExternal(2000);
       break;
     case '4':
-      cues.planetOverhead(time, 2000);
+      cues.planetOverhead(2000);
       break;
     case 'a':
       saveAnimation();

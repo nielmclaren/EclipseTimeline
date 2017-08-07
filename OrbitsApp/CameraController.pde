@@ -49,23 +49,21 @@ class CameraController {
     return this;
   }
 
-  CameraController followPlanetExternal(float t, long durationMs) {
+  CameraController followPlanetExternal(long durationMs) {
     _followMode = FOLLOW_PLANET_EXTERNAL;
-    updateFollowTarget(t, _followMode);
     setInitialAnimationProperties(durationMs);
     return this;
   }
 
-  CameraController followPlanetOverhead(float t, long durationMs) {
+  CameraController followPlanetOverhead(long durationMs) {
     _followMode = FOLLOW_PLANET_OVERHEAD;
-    updateFollowTarget(t, _followMode);
     setInitialAnimationProperties(durationMs);
     return this;
   }
 
   private void setInitialAnimationProperties(long durationMs) {
     _start = _current.clone();
-    _yawDirection = getDirection(_start.yaw(), _target.yaw());
+    _yawDirection = _target == null ? 0 : getDirection(_start.yaw(), _target.yaw());
     _durationMs = durationMs;
     _startTime = millis();
   }
@@ -126,6 +124,10 @@ class CameraController {
       _current = _target.merged(_current);
       setCompletedAnimationProperties();
     } else {
+      if (_yawDirection == 0) {
+        _yawDirection = getDirection(_start.yaw(), _target.yaw());
+      }
+
       PVector lookAt = PVector.lerp(_start.lookAt(), _target.lookAt(), u);
       _current = new CameraSetting(
         _target.yaw() >= 0 ? lerpAngle(_start.yaw(), _target.yaw(), u, _yawDirection) : _current.yaw(),

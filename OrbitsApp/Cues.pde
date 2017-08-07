@@ -11,28 +11,28 @@ class Cues {
     _renderer = renderer;
   }
 
-  Cues semExternalView(float t, long durationMs) {
+  Cues semExternalView(long durationMs) {
     _cam.animateTo(new CameraSetting(-1, radians(15), _sim.planetOrbitDist() * 2.2), durationMs);
     return this;
   }
 
-  Cues semSideView(float t, long durationMs) {
+  Cues semSideView(long durationMs) {
     _cam.animateTo(new CameraSetting(-1, 0, _sim.planetOrbitDist() * 2.2), durationMs);
     return this;
   }
 
-  Cues semOverhead(float t, long durationMs) {
+  Cues semOverhead(long durationMs) {
     _cam.animateTo(new CameraSetting(-1, HALF_PI, _sim.planetOrbitDist() * 2.2), durationMs);
     return this;
   }
 
-  Cues planetExternal(float t, long durationMs) {
-    _cam.followPlanetExternal(t, durationMs);
+  Cues planetExternal(long durationMs) {
+    _cam.followPlanetExternal(durationMs);
     return this;
   }
 
-  Cues planetOverhead(float t, long durationMs) {
-    _cam.followPlanetOverhead(t, durationMs);
+  Cues planetOverhead(long durationMs) {
+    _cam.followPlanetOverhead(durationMs);
     return this;
   }
 
