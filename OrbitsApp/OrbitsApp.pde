@@ -13,6 +13,7 @@ String[] sceneNames;
 String selectedSceneName;
 
 float time;
+boolean isPaused;
 
 ControlP5 cp5;
 Slider lunarOrbitInclineInput;
@@ -36,6 +37,7 @@ void setup() {
   cueScene(sceneNames[0]);
 
   time = 0;
+  isPaused = false;
   
   cp5 = new ControlP5(this);
   
@@ -62,7 +64,9 @@ void setupInputs() {
 }
 
 void draw() {
-  cues.update(time);
+  if (!isPaused) {
+    cues.update(time);
+  }
 
   buffer.beginDraw();
   setupLight(buffer);
@@ -72,7 +76,9 @@ void draw() {
   image(buffer, 0, 0);
   text(selectedSceneName, 20, 20);
 
-  time += 0.001;
+  if (!isPaused) {
+    time += 0.001;
+  }
 }
 
 void setupLight(PGraphics g) {
@@ -103,11 +109,14 @@ void saveAnimation() {
 
 void keyReleased() {
   int keyNum = key - '0';
-  if (keyNum < 10 && keyNum < sceneNames.length) {
+  if (keyNum >= 0 && keyNum < 10 && keyNum < sceneNames.length) {
     cueScene(sceneNames[keyNum]);
   }
 
   switch (key) {
+    case ' ':
+      isPaused = !isPaused;
+      break;
     case 'a':
       saveAnimation();
       break;

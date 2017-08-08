@@ -129,22 +129,25 @@ class Sim {
   }
 
   PVector getMoonPosition(float t) {
+    float lunarOrbitTime = t / _lunarOrbitPeriod;
+    return getMoonPosition(t, lunarOrbitTime);
+  }
+
+  PVector getMoonPosition(float t, float lunarOrbitTime) {
     PVector planetPos = getPlanetPosition(t);
     float apsidalPrecessionTime = t / _apsidalPrecessionPeriod;
-    float lunarOrbitTime = t / _lunarOrbitPeriod;
     
     float a = _moonMajorAxis / 2;
     float b = _moonMinorAxis / 2;
     float c = sqrt(a * a - b * b);
 
-    float x = c + a * cos(lunarOrbitTime * 2 * PI);
-    float y = b * sin(lunarOrbitTime * 2 * PI);
-
     PVector pos = new PVector(
-      x * cos(-apsidalPrecessionTime * 2 * PI) + y * sin(-apsidalPrecessionTime * 2 * PI),
-      x * sin(-apsidalPrecessionTime * 2 * PI) - y * cos(-apsidalPrecessionTime * 2 * PI),
+      a * cos(lunarOrbitTime * 2 * PI),
+      b * sin(lunarOrbitTime * 2 * PI),
       0);
 
+    pos = ThreeDee.translate(pos, c, 0, 0);
+    pos = ThreeDee.rotateZ(pos, -apsidalPrecessionTime * 2 * PI);
     pos = ThreeDee.rotateX(pos, _lunarOrbitInclineRad);
     pos = ThreeDee.rotateX(pos, PI/2);
     pos = ThreeDee.translate(pos, planetPos.x, planetPos.y, planetPos.z);

@@ -1,6 +1,7 @@
 
 class Renderer {
   private boolean _showLunarApsides;
+  private boolean _showLunarNodes;
   private boolean _showOrientationCues;
   private boolean _showPlanetOrbit;
   private boolean _showSun;
@@ -12,6 +13,7 @@ class Renderer {
 
   Renderer() {
     _showLunarApsides = true;
+    _showLunarNodes = true;
     _showOrientationCues = true;
     _showPlanetOrbit = true;
     _showSun = true;
@@ -20,6 +22,11 @@ class Renderer {
 
   Renderer showLunarApsides(boolean v) {
     _showLunarApsides = v;
+    return this;
+  }
+
+  Renderer showLunarNodes(boolean v) {
+    _showLunarNodes = v;
     return this;
   }
 
@@ -65,6 +72,10 @@ class Renderer {
 
     if (_showLunarApsides) {
       drawLunarApsides(sim, g, t);
+    }
+
+    if (_showLunarNodes) {
+      drawLunarNodes(sim, g, t);
     }
 
     drawMoon(sim, g, t);
@@ -169,14 +180,25 @@ class Renderer {
     g.pushStyle();
     g.noFill();
     g.stroke(_lineColor0);
-    g.strokeWeight(1);
+    g.strokeWeight(2);
+
+    g.ellipseMode(CENTER);
 
     g.translate(planetPos.x, planetPos.y, planetPos.z);
     g.rotateX(PI/2);
+
+    g.pushMatrix();
+    g.rotateZ(-apsidalPrecessionTime * 2 * PI);
+    g.translate(c, 0);
+    g.ellipse(0, 0, sim.moonMajorAxis(), sim.moonMinorAxis());
+    g.popMatrix();
+
+    g.pushMatrix();
     g.rotateX(sim.lunarOrbitInclineRad());
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
     g.ellipse(0, 0, sim.moonMajorAxis(), sim.moonMinorAxis());
+    g.popMatrix();
 
     g.popStyle();
 
@@ -204,6 +226,55 @@ class Renderer {
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
     g.line(-sim.moonMajorAxis()/2, 0, sim.moonMajorAxis()/2, 0);
+
+    g.popStyle();
+
+    g.popMatrix();
+  }
+
+  private void drawLunarNodes(Sim sim, PGraphics g, float t) {
+    PVector planetPos = sim.getPlanetPosition(t);
+    float apsidalPrecessionTime = t / sim.apsidalPrecessionPeriod();
+
+    float a = sim.moonMajorAxis() / 2;
+    float b = sim.moonMinorAxis() / 2;
+    float c = sqrt(a * a - b * b);
+
+    float cosine = cos(-apsidalPrecessionTime * 2 * PI);
+    float sine = sin(-apsidalPrecessionTime * 2 * PI);
+
+    // Quadratic formula.
+    float qa = a * a * sine * sine + b * b * cosine * cosine;
+    float qb = -2 * b * b * c * cosine;
+    float qc = b * b * c * c - a * a * b * b;
+    float x0 = (-qb + sqrt(qb * qb - 4 * qa * qc)) / (2 * qa);
+    float x1 = (-qb - sqrt(qb * qb - 4 * qa * qc)) / (2 * qa);
+
+    g.pushMatrix();
+
+    g.pushStyle();
+    g.noFill();
+    g.stroke(_lineColor1);
+    g.strokeWeight(1);
+
+    g.translate(planetPos.x, planetPos.y, planetPos.z);
+    g.rotateX(PI/2);
+    g.rotateX(sim.lunarOrbitInclineRad());
+    g.line(x0, 0, x1, 0);
+
+    // Ascending node.
+    g.pushMatrix();
+    g.translate(x0, 0);
+    g.sphereDetail(8);
+    g.sphere(10);
+    g.popMatrix();
+
+    // Descending node.
+    g.pushMatrix();
+    g.translate(x1, 0);
+    g.sphereDetail(8);
+    g.sphere(10);
+    g.popMatrix();
 
     g.popStyle();
 

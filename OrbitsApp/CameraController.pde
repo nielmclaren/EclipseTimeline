@@ -5,6 +5,7 @@ class CameraController {
   private final int FOLLOW_PLANET_EXTERNAL = 1;
   private final int FOLLOW_PLANET_OVERHEAD = 2;
   private final int FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN = 3;
+  private final int FOLLOW_PLANET_LUNAR_NODES_VIEW = 4;
 
   private Sim _sim;
   private PeasyCam _cam;
@@ -56,6 +57,14 @@ class CameraController {
   CameraController followPlanetExternal(long durationMs) {
     if (_followMode != FOLLOW_PLANET_EXTERNAL) {
       _followMode = FOLLOW_PLANET_EXTERNAL;
+      setInitialAnimationProperties(durationMs);
+    }
+    return this;
+  }
+
+  CameraController followPlanetLunarNodesView(long durationMs) {
+    if (_followMode != FOLLOW_PLANET_LUNAR_NODES_VIEW) {
+      _followMode = FOLLOW_PLANET_LUNAR_NODES_VIEW;
       setInitialAnimationProperties(durationMs);
     }
     return this;
@@ -124,6 +133,8 @@ class CameraController {
         return getFollowPlanetOverheadCameraSetting(t);
       case FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN:
         return getFollowPlanetOverheadRelativeToSunCameraSetting(t);
+      case FOLLOW_PLANET_LUNAR_NODES_VIEW:
+        return getFollowPlanetLunarNodesViewCameraSetting(t);
       default:
         return new CameraSetting();
     }
@@ -155,6 +166,16 @@ class CameraController {
       .yaw(planetRotation)
       .pitch(HALF_PI)
       .dist(_sim.moonMajorAxis() * 1.4)
+      .lookAt(planetPos);
+  }
+
+  private CameraSetting getFollowPlanetLunarNodesViewCameraSetting(float t) {
+    PVector planetPos = _sim.getPlanetPosition(t);
+    return new CameraSetting()
+      .yaw(2 * PI * 0.625)
+      .pitch(radians(15))
+      .roll(0)
+      .dist(_sim.planetOrbitDist() * 1.2)
       .lookAt(planetPos);
   }
 
