@@ -153,4 +153,13 @@ class Sim {
     pos = ThreeDee.translate(pos, planetPos.x, planetPos.y, planetPos.z);
     return pos;
   }
+
+  float getStarPlanetPolarDistance(float t) {
+    PVector planetPos = getPlanetPosition(t);
+    PVector moonPos = getMoonPosition(t);
+
+    PVector planetToStar = PVector.sub(new PVector(0, 0, 0), planetPos);
+    PVector planetToMoon = PVector.sub(moonPos, planetPos);
+    return PVector.angleBetween(planetToStar, planetToMoon);
+  }
 }

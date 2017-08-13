@@ -18,6 +18,13 @@ boolean isPaused;
 ControlP5 cp5;
 Slider lunarOrbitInclineInput;
 
+ArrayList<Float> spDeltaHistory;
+ArrayList<Float> spDeltaLogHistory;
+float spDeltaLogPower;
+int spDeltaHistoryMaxSize;
+Sparkline spDeltaSparkline;
+Sparkline spDeltaLogSparkline;
+
 FileNamer fileNamer;
 
 
@@ -42,6 +49,13 @@ void setup() {
   cp5 = new ControlP5(this);
   
   setupInputs();
+
+  spDeltaHistory = new ArrayList<Float>();
+  spDeltaLogHistory = new ArrayList<Float>();
+  spDeltaLogPower = 7;
+  spDeltaHistoryMaxSize = 2000;
+  spDeltaSparkline = new Sparkline(10, 0.8 * height, width - 20, 0.08 * height);
+  spDeltaLogSparkline = new Sparkline(10, 0.9 * height, width - 20, 0.08 * height);
 
   fileNamer = new FileNamer("output/frame", "png");
 }
@@ -75,6 +89,17 @@ void draw() {
 
   image(buffer, 0, 0);
   text(selectedSceneName, 20, 20);
+
+  spDeltaHistory.add(PI - sim.getStarPlanetPolarDistance(time));
+  spDeltaLogHistory.add(pow(PI - sim.getStarPlanetPolarDistance(time), spDeltaLogPower));
+  if (spDeltaHistory.size() > spDeltaHistoryMaxSize) {
+    spDeltaHistory.remove(0);
+  }
+  if (spDeltaLogHistory.size() > spDeltaHistoryMaxSize) {
+    spDeltaLogHistory.remove(0);
+  }
+  spDeltaSparkline.draw(g, spDeltaHistory, spDeltaHistoryMaxSize, 0, PI);
+  spDeltaLogSparkline.draw(g, spDeltaLogHistory, spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
 
   if (!isPaused) {
     time += 0.001;
