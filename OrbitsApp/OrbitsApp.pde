@@ -7,6 +7,7 @@ PGraphics buffer;
 Sim sim;
 PeasyCam cam;
 Renderer renderer;
+RangeRenderer rangeRenderer;
 Cues cues;
 
 String[] sceneNames;
@@ -37,6 +38,7 @@ void setup() {
   cam = new PeasyCam(this, buffer, 12000);
   cam.setActive(false);
   renderer = new Renderer();
+  rangeRenderer = new RangeRenderer();
   cues = new Cues(sim, cam, renderer);
 
   sceneNames = new String[]{"overhead", "intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
@@ -84,7 +86,8 @@ void draw() {
 
   buffer.beginDraw();
   setupLight(buffer);
-  renderer.draw(sim, buffer, time);
+  buffer.blendMode(ADD);
+  rangeRenderer.draw(sim, buffer, time, time + 0.1, 20);
   buffer.endDraw();
 
   image(buffer, 0, 0);
@@ -102,7 +105,7 @@ void draw() {
   spDeltaLogSparkline.draw(g, spDeltaLogHistory, spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
 
   if (!isPaused) {
-    time += 0.001;
+    time += 0.002;
   }
 }
 
@@ -144,6 +147,11 @@ void keyReleased() {
       break;
     case 'a':
       saveAnimation();
+      break;
+    case 'b':
+      buffer.beginDraw();
+      buffer.background(0);
+      buffer.endDraw();
       break;
     case 'r':
       save(fileNamer.next());
