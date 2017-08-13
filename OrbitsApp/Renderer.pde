@@ -1,7 +1,9 @@
 
 class Renderer {
+  private boolean _showFlatMoonOrbit;
   private boolean _showLunarApsides;
   private boolean _showLunarNodes;
+  private boolean _showMoonOrbit;
   private boolean _showOrientationCues;
   private boolean _showPlanetOrbit;
   private boolean _showSun;
@@ -12,12 +14,19 @@ class Renderer {
   private color _lineColor2 = color(17, 5, 78);
 
   Renderer() {
+    _showFlatMoonOrbit = true;
     _showLunarApsides = true;
     _showLunarNodes = true;
+    _showMoonOrbit = true;
     _showOrientationCues = true;
     _showPlanetOrbit = true;
     _showSun = true;
     _showSunPlanetLine = true;
+  }
+
+  Renderer showFlatMoonOrbit(boolean v) {
+    _showFlatMoonOrbit = v;
+    return this;
   }
 
   Renderer showLunarApsides(boolean v) {
@@ -27,6 +36,11 @@ class Renderer {
 
   Renderer showLunarNodes(boolean v) {
     _showLunarNodes = v;
+    return this;
+  }
+
+  Renderer showMoonOrbit(boolean v) {
+    _showMoonOrbit = v;
     return this;
   }
 
@@ -68,7 +82,14 @@ class Renderer {
     }
 
     drawPlanet(sim, g, t);
-    drawMoonOrbit(sim, g, t);
+
+    if (_showFlatMoonOrbit) {
+      drawFlatMoonOrbit(sim, g, t);
+    }
+
+    if (_showMoonOrbit) {
+      drawMoonOrbit(sim, g, t);
+    }
 
     if (_showLunarApsides) {
       drawLunarApsides(sim, g, t);
@@ -167,6 +188,34 @@ class Renderer {
     g.popMatrix();
   }
 
+  private void drawFlatMoonOrbit(Sim sim, PGraphics g, float t) {
+    PVector planetPos = sim.getPlanetPosition(t);
+    float apsidalPrecessionTime = t / sim.apsidalPrecessionPeriod();
+
+    float a = sim.moonMajorAxis() / 2;
+    float b = sim.moonMinorAxis() / 2;
+    float c = sqrt(a * a - b * b);
+
+    g.pushMatrix();
+
+    g.pushStyle();
+    g.noFill();
+    g.stroke(_lineColor0);
+    g.strokeWeight(2);
+
+    g.ellipseMode(CENTER);
+
+    g.translate(planetPos.x, planetPos.y, planetPos.z);
+    g.rotateX(PI/2);
+    g.rotateZ(-apsidalPrecessionTime * 2 * PI);
+    g.translate(c, 0);
+    g.ellipse(0, 0, sim.moonMajorAxis(), sim.moonMinorAxis());
+
+    g.popStyle();
+
+    g.popMatrix();
+  }
+
   private void drawMoonOrbit(Sim sim, PGraphics g, float t) {
     PVector planetPos = sim.getPlanetPosition(t);
     float apsidalPrecessionTime = t / sim.apsidalPrecessionPeriod();
@@ -186,12 +235,6 @@ class Renderer {
 
     g.translate(planetPos.x, planetPos.y, planetPos.z);
     g.rotateX(PI/2);
-
-    g.pushMatrix();
-    g.rotateZ(-apsidalPrecessionTime * 2 * PI);
-    g.translate(c, 0);
-    g.ellipse(0, 0, sim.moonMajorAxis(), sim.moonMinorAxis());
-    g.popMatrix();
 
     g.pushMatrix();
     g.rotateX(sim.lunarOrbitInclineRad());

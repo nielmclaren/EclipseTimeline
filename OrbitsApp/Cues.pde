@@ -30,6 +30,10 @@ class Cues {
       case "intro_draconic":
         introDraconicMonth(2000);
         break;
+
+      case "overhead":
+        spmOverhead(2000);
+        break;
         
       default:
     }
@@ -92,7 +96,27 @@ class Cues {
     return this;
   }
 
-  Cues spmExternalView(long durationMs) {
+  Cues spmOverhead(long durationMs) {
+    sceneDefault();
+    _sim
+      .moonMajorAxis(600)
+      .moonMinorAxis(550)
+      .lunarOrbitInclineRad(radians(20));
+    _renderer
+      .showLunarApsides(false)
+      .showLunarNodes(false)
+      .showFlatMoonOrbit(false)
+      .showMoonOrbit(true)
+      .showOrientationCues(false)
+      .showSun(true)
+      .showPlanetOrbit(true)
+      .showSunPlanetLine(true);
+
+    spmOverheadView(durationMs);
+    return this;
+  }
+
+  private Cues spmExternalView(long durationMs) {
     CameraSetting setting = new CameraSetting()
       .pitch(radians(15))
       .roll(0)
@@ -101,7 +125,7 @@ class Cues {
     return this;
   }
 
-  Cues spmSideView(long durationMs) {
+  private Cues spmSideView(long durationMs) {
     CameraSetting setting = new CameraSetting()
       .pitch(0)
       .roll(0)
@@ -110,7 +134,7 @@ class Cues {
     return this;
   }
 
-  Cues spmOverhead(long durationMs) {
+  private Cues spmOverheadView(long durationMs) {
     CameraSetting setting = new CameraSetting()
       .pitch(HALF_PI)
       .roll(0)
@@ -119,32 +143,32 @@ class Cues {
     return this;
   }
 
-  Cues planetExternal(long durationMs) {
+  private Cues planetExternal(long durationMs) {
     _cam.followPlanetExternal(durationMs);
     return this;
   }
 
-  Cues planetLunarNodesView(long durationMs) {
+  private Cues planetLunarNodesView(long durationMs) {
     _cam.followPlanetLunarNodesView(durationMs);
     return this;
   }
 
-  Cues planetOverhead(long durationMs) {
+  private Cues planetOverhead(long durationMs) {
     _cam.followPlanetOverhead(durationMs);
     return this;
   }
 
-  Cues planetOverheadRelativeToSun(long durationMs) {
+  private Cues planetOverheadRelativeToSun(long durationMs) {
     _cam.followPlanetOverheadRelativeToSun(durationMs);
     return this;
   }
 
-  Cues spmClean() {
+  private Cues spmClean() {
     _renderer.showSunPlanetLine(false);
     return this;
   }
 
-  Cues sceneDefault() {
+  private Cues sceneDefault() {
     _sim
       .sunRadius(500)
       .planetOrbitDist(1800)

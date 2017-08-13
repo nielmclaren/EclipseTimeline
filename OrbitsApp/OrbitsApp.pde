@@ -32,7 +32,7 @@ void setup() {
   renderer = new Renderer();
   cues = new Cues(sim, cam, renderer);
 
-  sceneNames = new String[]{"intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  sceneNames = new String[]{"overhead", "intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   selectedSceneName = "";
   cueScene(sceneNames[0]);
 
@@ -132,7 +132,6 @@ void controlEvent(ControlEvent e) {
     sim.lunarOrbitInclineRad(radians(v));
   }  
 
-  sceneNames = new String[]{"intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   for (int i = 0; i < sceneNames.length; i++) {
     if (e.isFrom(cp5.getController(sceneNames[i]))) {
       cueScene(sceneNames[i]);
