@@ -13,11 +13,14 @@ String[] sceneNames;
 String selectedSceneName;
 
 float time;
+float prevTime;
 float speed;
 boolean isPaused;
+int fadeAmount;
 
 ControlP5 cp5;
 Slider speedInput;
+Slider fadeInput;
 Slider lunarOrbitInclineInput;
 
 ArrayList<Float> spDeltaHistory;
@@ -51,8 +54,10 @@ void setup() {
   cueScene(sceneNames[0]);
 
   time = 0;
+  prevTime = 0;
   speed = 0.002;
   isPaused = false;
+  fadeAmount = 0;
   
   cp5 = new ControlP5(this);
   
@@ -72,8 +77,14 @@ void setupInputs() {
   float currY = 60;
 
   speedInput = cp5.addSlider("speedInput")
-    .setRange(0.0001, 0.05)
+    .setRange(sqrt(0.0001), sqrt(0.5))
     .setValue(0.002)
+    .setPosition(20, currY);
+  currY += 25;
+
+  fadeInput = cp5.addSlider("fadeInput")
+    .setRange(0, 255)
+    .setValue(32)
     .setPosition(20, currY);
   currY += 25;
 
@@ -92,18 +103,33 @@ void setupInputs() {
 }
 
 void draw() {
+  float lastDrawTime = -1;
+
   if (!isPaused) {
     cues.update(time);
   }
 
-  pushStyle();
-  noStroke();
-  fill(0, map(speed, 0.0001, 0.05, 255, 2));
-  rect(0, 0, width, height);
-  popStyle();
+  buffer.beginDraw();
+  buffer.background(0, 0);
+  if (speed > 1 / renderer.rangeStepsPerYear()) {
+    // Draw quantized times when moving quickly.
+    lastDrawTime = renderer.drawRange(sim, buffer, prevTime, time);
+  } else {
+    // Draw the exact time when moving slowly.
+    renderer.draw(sim, buffer, time);
+    lastDrawTime = time;
+  }
+  buffer.endDraw();
 
-  updateBuffer(time);
-  image(buffer, 0, 0);
+  if (lastDrawTime >= 0) {
+    pushStyle();
+    noStroke();
+    fill(0, 255 - fadeAmount);
+    rect(0, 0, width, height);
+    popStyle();
+
+    image(buffer, 0, 0);
+  }
 
   if (!isPaused) {
     updateHistories();
@@ -116,14 +142,10 @@ void draw() {
   if (!isPaused) {
     time += speed;
   }
-}
 
-void updateBuffer(float t) {
-  PGraphics g = buffer;
-  g.beginDraw();
-  g.background(0, 0);
-  renderer.draw(sim, g, t);
-  g.endDraw();
+  if (lastDrawTime >= 0) {
+    prevTime = lastDrawTime;
+  }
 }
 
 void updateHistories() {
@@ -186,7 +208,12 @@ void keyReleased() {
 void controlEvent(ControlEvent e) {
   if (e.isFrom(cp5.getController("speedInput"))) {
     float v = cp5.getController("speedInput").getValue();
-    speed = v;
+    speed = v * v;
+    println("Speed: " + speed);
+  } else if (e.isFrom(cp5.getController("fadeInput"))) {
+    float v = cp5.getController("fadeInput").getValue();
+    fadeAmount = floor(v);
+    println("Fade amount: " + fadeAmount);
   }  else if (e.isFrom(cp5.getController("lunarOrbitInclineInput"))) {
     float v = cp5.getController("lunarOrbitInclineInput").getValue();
     sim.lunarOrbitInclineRad(radians(v));
