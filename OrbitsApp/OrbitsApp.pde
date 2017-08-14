@@ -15,8 +15,10 @@ String selectedSceneName;
 float time;
 float prevTime;
 float speed;
+final float initialSpeed = sqrt(0.002);
 boolean isPaused;
 int fadeAmount;
+final int initialFadeAmount = 240;
 
 ControlP5 cp5;
 Slider speedInput;
@@ -55,9 +57,9 @@ void setup() {
 
   time = 0;
   prevTime = 0;
-  speed = 0.002;
+  speed = initialSpeed;
   isPaused = false;
-  fadeAmount = 0;
+  fadeAmount = initialFadeAmount;
   
   cp5 = new ControlP5(this);
   
@@ -78,13 +80,13 @@ void setupInputs() {
 
   speedInput = cp5.addSlider("speedInput")
     .setRange(sqrt(0.0001), sqrt(0.5))
-    .setValue(0.002)
+    .setValue(initialSpeed)
     .setPosition(20, currY);
   currY += 25;
 
   fadeInput = cp5.addSlider("fadeInput")
     .setRange(0, 255)
-    .setValue(32)
+    .setValue(initialFadeAmount)
     .setPosition(20, currY);
   currY += 25;
 
@@ -111,6 +113,7 @@ void draw() {
 
   buffer.beginDraw();
   buffer.background(0, 0);
+  buffer.blendMode(ADD);
   if (speed > 1 / renderer.rangeStepsPerYear()) {
     // Draw quantized times when moving quickly.
     lastDrawTime = renderer.drawRange(sim, buffer, prevTime, time);
@@ -217,6 +220,7 @@ void controlEvent(ControlEvent e) {
   }  else if (e.isFrom(cp5.getController("lunarOrbitInclineInput"))) {
     float v = cp5.getController("lunarOrbitInclineInput").getValue();
     sim.lunarOrbitInclineRad(radians(v));
+    println("Lunar orbit incline: " + v);
   }  
 
   for (int i = 0; i < sceneNames.length; i++) {
