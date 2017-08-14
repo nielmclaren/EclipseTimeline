@@ -67,6 +67,8 @@ void setup() {
 
   time = 0;
   prevTime = 0;
+  useGyro = initialUseGyro;
+  speed = initialSpeed;
   isPaused = false;
   fadeAmount = initialFadeAmount;
   
@@ -88,16 +90,16 @@ void setup() {
 void setupInputs() {
   float currY = 60;
 
-  useGyroInput = cp5.addToggle("useGyroInput")
-    .setValue(initialUseGyro)
-    .setPosition(20, currY);
-  currY += 45;
-
   speedInput = cp5.addSlider("speedInput")
     .setRange(sqrt(0.0001), sqrt(0.5))
     .setValue(initialSpeed)
     .setPosition(20, currY);
   currY += 25;
+
+  useGyroInput = cp5.addToggle("useGyroInput")
+    .setValue(initialUseGyro)
+    .setPosition(20, currY);
+  currY += 45;
 
   fadeInput = cp5.addSlider("fadeInput")
     .setRange(0, 255)
