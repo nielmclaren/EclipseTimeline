@@ -65,8 +65,6 @@ class Renderer {
   }
 
   void draw(Sim sim, PGraphics g, float t) {
-    drawBackground(sim, g);
-
     if (_showOrientationCues) {
       drawOrientationCues(sim, g);
     }
@@ -100,10 +98,6 @@ class Renderer {
     }
 
     drawMoon(sim, g, t);
-  }
-
-  private void drawBackground(Sim sim, PGraphics g) {
-    g.background(0);
   }
 
   private void drawOrientationCues(Sim sim, PGraphics g) {

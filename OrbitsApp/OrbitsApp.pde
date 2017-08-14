@@ -38,6 +38,8 @@ void setup() {
   buffer.background(0);
   buffer.endDraw();
 
+  background(0);
+
   sim = new Sim();
   cam = new PeasyCam(this, buffer, 12000);
   cam.setActive(false);
@@ -94,6 +96,12 @@ void draw() {
     cues.update(time);
   }
 
+  pushStyle();
+  noStroke();
+  fill(0, map(speed, 0.0001, 0.05, 255, 2));
+  rect(0, 0, width, height);
+  popStyle();
+
   updateBuffer(time);
   image(buffer, 0, 0);
 
@@ -113,6 +121,7 @@ void draw() {
 void updateBuffer(float t) {
   PGraphics g = buffer;
   g.beginDraw();
+  g.background(0, 0);
   renderer.draw(sim, g, t);
   g.endDraw();
 }
