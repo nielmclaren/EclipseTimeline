@@ -113,8 +113,6 @@ void draw() {
 void updateBuffer(float t) {
   PGraphics g = buffer;
   g.beginDraw();
-  setupLight(g);
-  g.background(0);
   renderer.draw(sim, g, t);
   g.endDraw();
 }
@@ -135,14 +133,6 @@ void drawHistories() {
   spDeltaLogSparkline.draw(g, spDeltaLogHistory, spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
 }
 
-void setupLight(PGraphics g) {
-  g.ambientLight(255, 255, 255);
-  
-  g.pushMatrix();
-  g.translate(0, -1500, -2000);
-  g.popMatrix();
-}
-
 void saveAnimation() {
   FileNamer animationNamer = new FileNamer("output/anim", "/");
   FileNamer frameNamer = new FileNamer(animationNamer.next() + "frame", "png");
@@ -151,7 +141,6 @@ void saveAnimation() {
   for (int i = 0; i < numFrames; i++) {
     float t = (float)i / numFrames;
     buffer.beginDraw();
-    setupLight(buffer);
     renderer.draw(sim, buffer, t);
     buffer.endDraw();
 
