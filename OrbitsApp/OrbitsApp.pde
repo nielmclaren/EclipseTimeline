@@ -17,6 +17,8 @@ String selectedSceneName;
 
 float time;
 float prevTime;
+boolean useGyro;
+final boolean initialUseGyro = true;
 float speed;
 final float initialSpeed = sqrt(0.002);
 boolean isPaused;
@@ -29,6 +31,7 @@ float spDeltaLogPower;
 int spDeltaHistoryMaxSize;
 
 ControlP5 cp5;
+Toggle useGyroInput;
 Slider speedInput;
 Slider fadeInput;
 Slider lunarOrbitInclineInput;
@@ -64,7 +67,6 @@ void setup() {
 
   time = 0;
   prevTime = 0;
-  speed = initialSpeed;
   isPaused = false;
   fadeAmount = initialFadeAmount;
   
@@ -85,6 +87,11 @@ void setup() {
 
 void setupInputs() {
   float currY = 60;
+
+  useGyroInput = cp5.addToggle("useGyroInput")
+    .setValue(initialUseGyro)
+    .setPosition(20, currY);
+  currY += 45;
 
   speedInput = cp5.addSlider("speedInput")
     .setRange(sqrt(0.0001), sqrt(0.5))
@@ -113,26 +120,34 @@ void setupInputs() {
 }
 
 void draw() {
-  float lastDrawTime = -1;
+  if (useGyro) {
+    float v = map(gyroReader.magnitude(), 0, gyroReader.MAX_VALUE, 0.0002, 0.5);
+    speed = gyroReader.direction() * v * v;
+  }
 
   if (!isPaused) {
     cues.update(time);
   }
 
+  boolean drew = false;
   buffer.beginDraw();
   buffer.background(0, 0);
   buffer.blendMode(ADD);
-  if (speed > 1 / renderer.rangeStepsPerYear()) {
+  if (abs(speed) > 1 / renderer.rangeStepsPerYear()) {
     // Draw quantized times when moving quickly.
-    lastDrawTime = renderer.drawRange(sim, buffer, prevTime, time);
+    drew = renderer.drawRange(sim, buffer, prevTime, time);
+    if (drew) {
+      prevTime = renderer.lastDrawTime();
+    }
   } else {
     // Draw the exact time when moving slowly.
     renderer.draw(sim, buffer, time);
-    lastDrawTime = time;
+    prevTime = time;
+    drew = true;
   }
   buffer.endDraw();
 
-  if (lastDrawTime >= 0) {
+  if (drew) {
     pushStyle();
     noStroke();
     fill(0, 255 - fadeAmount);
@@ -152,10 +167,6 @@ void draw() {
 
   if (!isPaused) {
     time += speed;
-  }
-
-  if (lastDrawTime >= 0) {
-    prevTime = lastDrawTime;
   }
 }
 
@@ -219,9 +230,23 @@ void keyReleased() {
 }
 
 void controlEvent(ControlEvent e) {
-  if (e.isFrom(cp5.getController("speedInput"))) {
+  if (e.isFrom(cp5.getController("useGyroInput"))) {
+    boolean v = cp5.getController("useGyroInput").getValue() != 0;
+    useGyro = v;
+
+    if (!useGyro) {
+      float speedValue = cp5.getController("speedInput").getValue();
+      speed = speedValue * speedValue;
+    }
+
+    println("Use gyro: " + useGyro);
+  } else if (e.isFrom(cp5.getController("speedInput"))) {
     float v = cp5.getController("speedInput").getValue();
     speed = v * v;
+
+    useGyroInput.setValue(false);
+    useGyro = false;
+
     println("Speed: " + speed);
   } else if (e.isFrom(cp5.getController("fadeInput"))) {
     float v = cp5.getController("fadeInput").getValue();

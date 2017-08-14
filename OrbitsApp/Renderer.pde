@@ -9,6 +9,7 @@ class Renderer {
   private boolean _showSun;
   private boolean _showSunPlanetLine;
   private int _rangeStepsPerYear;
+  private float _lastDrawTime;
 
   private color _lineColor0 = color(83, 80, 230);
   private color _lineColor1 = color(175, 209, 252);
@@ -25,6 +26,7 @@ class Renderer {
     _showSunPlanetLine = true;
 
     _rangeStepsPerYear = 200;
+    _lastDrawTime = 0;
   }
 
   Renderer showFlatMoonOrbit(boolean v) {
@@ -71,6 +73,10 @@ class Renderer {
     return _rangeStepsPerYear;
   }
 
+  float lastDrawTime() {
+    return _lastDrawTime;
+  }
+
   void draw(Sim sim, PGraphics g, float t) {
     if (_showOrientationCues) {
       drawOrientationCues(sim, g);
@@ -107,17 +113,23 @@ class Renderer {
     drawMoon(sim, g, t);
   }
 
-  float drawRange(Sim sim, PGraphics g, float startTime, float endTime) {
-    float lastDrawTime = -1;
-    float t = (float)ceil(startTime * _rangeStepsPerYear) / _rangeStepsPerYear;
-    int numDraws = 0;
-    while (t <= endTime) {
-      draw(sim, g, t);
-      lastDrawTime = t;
-      t += 1.0 / _rangeStepsPerYear;
-      numDraws++;
+  boolean drawRange(Sim sim, PGraphics g, float startTime, float endTime) {
+    float delta = endTime - startTime;
+    if (delta == 0) {
+      return false;
     }
-    return lastDrawTime;
+
+    int direction = (int)(abs(delta) / delta);
+    float t = (float)ceil(startTime * _rangeStepsPerYear) / _rangeStepsPerYear;
+
+    boolean drew = false;
+    while ((t <= endTime) == (direction >= 0)) {
+      draw(sim, g, t);
+      drew = true;
+      _lastDrawTime = t;
+      t += 1.0 / _rangeStepsPerYear * direction;
+    }
+    return drew;
   }
 
   private void drawOrientationCues(Sim sim, PGraphics g) {
