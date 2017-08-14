@@ -86,6 +86,7 @@ class Cues {
       .moonMinorAxis(550)
       .lunarOrbitInclineRad(radians(20));
     _renderer
+      .showFlatMoonOrbit(true)
       .showLunarApsides(false)
       .showLunarNodes(true)
       .showSun(true)
