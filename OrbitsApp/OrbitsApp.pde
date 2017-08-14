@@ -1,6 +1,9 @@
 
 import controlP5.*;
 import peasy.*;
+import processing.serial.*;
+
+GyroReader gyroReader;
 
 PGraphics buffer;
 
@@ -20,23 +23,27 @@ boolean isPaused;
 int fadeAmount;
 final int initialFadeAmount = 240;
 
-ControlP5 cp5;
-Slider speedInput;
-Slider fadeInput;
-Slider lunarOrbitInclineInput;
-
 ArrayList<Float> spDeltaHistory;
 ArrayList<Float> spDeltaLogHistory;
 float spDeltaLogPower;
 int spDeltaHistoryMaxSize;
+
+ControlP5 cp5;
+Slider speedInput;
+Slider fadeInput;
+Slider lunarOrbitInclineInput;
 Sparkline spDeltaSparkline;
 Sparkline spDeltaLogSparkline;
+Sparkline gyroSparkline;
 
 FileNamer fileNamer;
 
 
 void setup() {
   size(800, 800, P3D);
+
+  printArray(Serial.list());
+  gyroReader = new GyroReader(new Serial(this, Serial.list()[1], 9600));
 
   buffer = createGraphics(width, height, P3D);
   buffer.beginDraw();
@@ -69,8 +76,9 @@ void setup() {
   spDeltaLogHistory = new ArrayList<Float>();
   spDeltaLogPower = 7;
   spDeltaHistoryMaxSize = 2000;
-  spDeltaSparkline = new Sparkline(10, 0.8 * height, width - 20, 0.08 * height);
-  spDeltaLogSparkline = new Sparkline(10, 0.9 * height, width - 20, 0.08 * height);
+  spDeltaSparkline = new Sparkline(10, 0.7 * height, width - 20, 0.08 * height);
+  spDeltaLogSparkline = new Sparkline(10, 0.8 * height, width - 20, 0.08 * height);
+  gyroSparkline = new Sparkline(10, 0.9 * height, width - 20, 0.08 * height);
 
   fileNamer = new FileNamer("output/frame", "png");
 }
@@ -135,12 +143,12 @@ void draw() {
   }
 
   if (!isPaused) {
-    updateHistories();
+    updateSparklines();
   }
 
   text(frameRate + " fps", 20, 20);
   text(selectedSceneName, 20, 40);
-  drawHistories();
+  drawSparklines();
 
   if (!isPaused) {
     time += speed;
@@ -151,7 +159,7 @@ void draw() {
   }
 }
 
-void updateHistories() {
+void updateSparklines() {
   spDeltaHistory.add(PI - sim.getStarPlanetPolarDistance(time));
   spDeltaLogHistory.add(pow(PI - sim.getStarPlanetPolarDistance(time), spDeltaLogPower));
   if (spDeltaHistory.size() > spDeltaHistoryMaxSize) {
@@ -160,11 +168,13 @@ void updateHistories() {
   if (spDeltaLogHistory.size() > spDeltaHistoryMaxSize) {
     spDeltaLogHistory.remove(0);
   }
+  gyroReader.update();
 }
 
-void drawHistories() {
+void drawSparklines() {
   spDeltaSparkline.draw(g, spDeltaHistory, spDeltaHistoryMaxSize, 0, PI);
   spDeltaLogSparkline.draw(g, spDeltaLogHistory, spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
+  gyroSparkline.draw(g, gyroReader.magnitudeHistory(), gyroReader.MAX_READINGS, 0, gyroReader.MAX_VALUE);
 }
 
 void saveAnimation() {
