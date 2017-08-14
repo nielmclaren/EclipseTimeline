@@ -7,16 +7,17 @@ PGraphics buffer;
 Sim sim;
 PeasyCam cam;
 Renderer renderer;
-RangeRenderer rangeRenderer;
 Cues cues;
 
 String[] sceneNames;
 String selectedSceneName;
 
 float time;
+float speed;
 boolean isPaused;
 
 ControlP5 cp5;
+Slider speedInput;
 Slider lunarOrbitInclineInput;
 
 ArrayList<Float> spDeltaHistory;
@@ -33,12 +34,14 @@ void setup() {
   size(800, 800, P3D);
 
   buffer = createGraphics(width, height, P3D);
+  buffer.beginDraw();
+  buffer.background(0);
+  buffer.endDraw();
 
   sim = new Sim();
   cam = new PeasyCam(this, buffer, 12000);
   cam.setActive(false);
   renderer = new Renderer();
-  rangeRenderer = new RangeRenderer();
   cues = new Cues(sim, cam, renderer);
 
   sceneNames = new String[]{"overhead", "intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
@@ -46,6 +49,7 @@ void setup() {
   cueScene(sceneNames[0]);
 
   time = 0;
+  speed = 0.002;
   isPaused = false;
   
   cp5 = new ControlP5(this);
@@ -63,7 +67,13 @@ void setup() {
 }
 
 void setupInputs() {
-  float currY = 40;
+  float currY = 60;
+
+  speedInput = cp5.addSlider("speedInput")
+    .setRange(0.0001, 0.05)
+    .setValue(0.002)
+    .setPosition(20, currY);
+  currY += 25;
 
   lunarOrbitInclineInput = cp5.addSlider("lunarOrbitInclineInput")
     .setRange(0, 30)
@@ -84,15 +94,32 @@ void draw() {
     cues.update(time);
   }
 
-  buffer.beginDraw();
-  setupLight(buffer);
-  buffer.blendMode(ADD);
-  rangeRenderer.draw(sim, buffer, time, time + 0.1, 20);
-  buffer.endDraw();
-
+  updateBuffer(time);
   image(buffer, 0, 0);
-  text(selectedSceneName, 20, 20);
 
+  if (!isPaused) {
+    updateHistories();
+  }
+
+  text(frameRate + " fps", 20, 20);
+  text(selectedSceneName, 20, 40);
+  drawHistories();
+
+  if (!isPaused) {
+    time += speed;
+  }
+}
+
+void updateBuffer(float t) {
+  PGraphics g = buffer;
+  g.beginDraw();
+  setupLight(g);
+  g.background(0);
+  renderer.draw(sim, g, t);
+  g.endDraw();
+}
+
+void updateHistories() {
   spDeltaHistory.add(PI - sim.getStarPlanetPolarDistance(time));
   spDeltaLogHistory.add(pow(PI - sim.getStarPlanetPolarDistance(time), spDeltaLogPower));
   if (spDeltaHistory.size() > spDeltaHistoryMaxSize) {
@@ -101,12 +128,11 @@ void draw() {
   if (spDeltaLogHistory.size() > spDeltaHistoryMaxSize) {
     spDeltaLogHistory.remove(0);
   }
+}
+
+void drawHistories() {
   spDeltaSparkline.draw(g, spDeltaHistory, spDeltaHistoryMaxSize, 0, PI);
   spDeltaLogSparkline.draw(g, spDeltaLogHistory, spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
-
-  if (!isPaused) {
-    time += 0.002;
-  }
 }
 
 void setupLight(PGraphics g) {
@@ -160,7 +186,10 @@ void keyReleased() {
 }
 
 void controlEvent(ControlEvent e) {
-  if (e.isFrom(cp5.getController("lunarOrbitInclineInput"))) {
+  if (e.isFrom(cp5.getController("speedInput"))) {
+    float v = cp5.getController("speedInput").getValue();
+    speed = v;
+  }  else if (e.isFrom(cp5.getController("lunarOrbitInclineInput"))) {
     float v = cp5.getController("lunarOrbitInclineInput").getValue();
     sim.lunarOrbitInclineRad(radians(v));
   }  
