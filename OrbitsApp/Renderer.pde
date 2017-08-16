@@ -216,7 +216,7 @@ class Renderer {
     g.noFill();
     g.stroke(_lineColor1);
 
-    g.sphereDetail(12);
+    g.sphereDetail(20);
     g.sphere(sim.planetRadius());
     
     g.popStyle();
@@ -343,7 +343,7 @@ class Renderer {
     // Ascending node.
     g.pushMatrix();
     g.translate(x0, 0);
-    g.sphereDetail(8);
+    g.sphereDetail(20);
     g.sphere(10);
     g.popMatrix();
 
@@ -370,7 +370,7 @@ class Renderer {
     
     g.stroke(_lineColor0);
     g.noFill();
-    g.sphereDetail(8);
+    g.sphereDetail(12);
     g.sphere(sim.moonRadius());
     
     g.popStyle();

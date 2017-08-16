@@ -12,7 +12,7 @@ class Sim {
   private float _moonRadius;
 
   Sim() {
-    _sunRadius = 500;
+    _sunRadius = 330;
     _planetOrbitDist = 1800;
     _planetRadius = 100;
     _dayPeriod = 1. / 365.25;

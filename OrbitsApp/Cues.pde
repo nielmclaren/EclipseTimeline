@@ -60,8 +60,8 @@ class Cues {
   Cues introSynodicMonth(long durationMs) {
     sceneDefault();
     _sim
-      .moonMajorAxis(550)
-      .moonMinorAxis(550)
+      .moonMajorAxis(475)
+      .moonMinorAxis(475)
       .lunarOrbitInclineRad(0);
     _renderer
       .showLunarApsides(false)
@@ -77,8 +77,6 @@ class Cues {
     sceneDefault();
     _sim
       .apsidalPrecessionPeriod(3)
-      .moonMajorAxis(600)
-      .moonMinorAxis(550)
       .lunarOrbitInclineRad(0);
     _renderer
       .showLunarApsides(true)
@@ -92,10 +90,6 @@ class Cues {
 
   Cues introDraconicMonth(long durationMs) {
     sceneDefault();
-    _sim
-      .moonMajorAxis(600)
-      .moonMinorAxis(550)
-      .lunarOrbitInclineRad(radians(20));
     _renderer
       .showFlatMoonOrbit(true)
       .showLunarApsides(false)
@@ -111,8 +105,6 @@ class Cues {
   Cues spmOverhead(long durationMs) {
     sceneDefault();
     _sim
-      .moonMajorAxis(600)
-      .moonMinorAxis(550)
       .lunarOrbitInclineRad(radians(20));
     _renderer
       .showLunarApsides(false)
@@ -187,13 +179,13 @@ class Cues {
 
   private Cues sceneDefault() {
     _sim
-      .sunRadius(500)
+      .sunRadius(330)
       .planetOrbitDist(1800)
       .planetRadius(100)
       .dayPeriod(1. / 365.25)
-      .moonMajorAxis(550)
-      .moonMinorAxis(550)
-      .lunarOrbitInclineRad(radians(5.1))
+      .moonMajorAxis(500)
+      .moonMinorAxis(475)
+      .lunarOrbitInclineRad(radians(20))
       .lunarOrbitPeriod(1. / 12)
       .apsidalPrecessionPeriod(9)
       .moonRadius(50);
