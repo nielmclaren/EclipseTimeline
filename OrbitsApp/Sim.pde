@@ -115,7 +115,7 @@ class Sim {
   }
 
   float getPlanetRotation(float t) {
-    return map(t % 1, 0, 1, 0, 2 * PI);
+    return map(t % 1, 0, 1, 0, TWO_PI);
   }
 
   PVector getPlanetPosition(float t) {
@@ -149,7 +149,8 @@ class Sim {
     pos = ThreeDee.translate(pos, c, 0, 0);
     pos = ThreeDee.rotateZ(pos, -apsidalPrecessionTime * 2 * PI);
     pos = ThreeDee.rotateX(pos, _lunarOrbitInclineRad);
-    pos = ThreeDee.rotateX(pos, PI/2);
+    pos = ThreeDee.rotateZ(pos, HALF_PI);
+    pos = ThreeDee.rotateX(pos, HALF_PI);
     pos = ThreeDee.translate(pos, planetPos.x, planetPos.y, planetPos.z);
     return pos;
   }
@@ -161,5 +162,9 @@ class Sim {
     PVector planetToStar = PVector.sub(new PVector(0, 0, 0), planetPos);
     PVector planetToMoon = PVector.sub(moonPos, planetPos);
     return PVector.angleBetween(planetToStar, planetToMoon);
+  }
+
+  boolean isEclipse(float t) {
+    return getStarMoonPolarDistance(t) < radians(5);
   }
 }

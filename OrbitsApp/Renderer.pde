@@ -172,7 +172,7 @@ class Renderer {
     g.strokeWeight(1);
     g.ellipseMode(RADIUS);
 
-    g.rotateX(PI/2);
+    g.rotateX(HALF_PI);
     g.ellipse(0, 0, sim.planetOrbitDist(), sim.planetOrbitDist());
 
     g.popStyle();
@@ -232,7 +232,7 @@ class Renderer {
     g.ellipseMode(CENTER);
 
     g.translate(planetPos.x, planetPos.y, planetPos.z);
-    g.rotateX(PI/2);
+    g.rotateX(HALF_PI);
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
     g.ellipse(0, 0, sim.moonMajorAxis(), sim.moonMinorAxis());
@@ -260,9 +260,10 @@ class Renderer {
     g.ellipseMode(CENTER);
 
     g.translate(planetPos.x, planetPos.y, planetPos.z);
-    g.rotateX(PI/2);
+    g.rotateX(HALF_PI);
 
     g.pushMatrix();
+    g.rotateZ(HALF_PI);
     g.rotateX(sim.lunarOrbitInclineRad());
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
@@ -290,7 +291,8 @@ class Renderer {
     g.strokeWeight(1);
 
     g.translate(planetPos.x, planetPos.y, planetPos.z);
-    g.rotateX(PI/2);
+    g.rotateX(HALF_PI);
+    g.rotateZ(HALF_PI);
     g.rotateX(sim.lunarOrbitInclineRad());
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
@@ -327,7 +329,8 @@ class Renderer {
     g.strokeWeight(1);
 
     g.translate(planetPos.x, planetPos.y, planetPos.z);
-    g.rotateX(PI/2);
+    g.rotateX(HALF_PI);
+    g.rotateZ(HALF_PI);
     g.rotateX(sim.lunarOrbitInclineRad());
     g.line(x0, 0, x1, 0);
 

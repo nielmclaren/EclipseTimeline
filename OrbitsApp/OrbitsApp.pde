@@ -9,19 +9,21 @@ PGraphics backgroundBuffer;
 PGraphics renderBuffer;
 PGraphics fadeBuffer;
 PGraphics compositeBuffer;
+PGraphics longTermBuffer;
 
 Sim sim;
-PeasyCam backgroundCam;
-PeasyCam cam;
 Renderer renderer;
+LongTermRenderer longTermRenderer;
 Cues cues;
 
 String[] sceneNames;
 String selectedSceneName;
 
 float time;
-float lastRendererDrawTime;
-float lastCompositeDrawTime;
+float lastDrawTime;
+boolean isLongTermMode;
+float longTermStartTime;
+
 boolean useGyro;
 final boolean initialUseGyro = true;
 float speed;
@@ -61,24 +63,28 @@ void setup() {
   fadeBuffer.noStroke();
   fadeBuffer.endDraw();
   compositeBuffer = createBuffer(width, height, P3D);
+  longTermBuffer = createBuffer(width, height, P3D);
 
   background(0);
 
   sim = new Sim();
-  backgroundCam = new PeasyCam(this, backgroundBuffer, 12000);
-  backgroundCam.setActive(false);
-  cam = new PeasyCam(this, renderBuffer, 12000);
-  cam.setActive(false);
+  PeasyCam backgroundCam = createCam(backgroundBuffer);
+  PeasyCam renderCam = createCam(renderBuffer);
+  PeasyCam longTermCam = createCam(longTermBuffer);
+
   renderer = new Renderer();
-  cues = new Cues(sim, new PeasyCam[]{backgroundCam, cam}, renderer);
+  longTermRenderer = new LongTermRenderer();
+  cues = new Cues(sim, new PeasyCam[]{backgroundCam, renderCam, longTermCam}, renderer);
 
   sceneNames = new String[]{"overhead", "intro", "eclipse", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   selectedSceneName = "";
   cueScene(sceneNames[0]);
 
   time = 0;
-  lastRendererDrawTime = 0;
-  lastCompositeDrawTime = 0;
+  lastDrawTime = 0;
+  isLongTermMode = true;
+  longTermStartTime = 0;
+
   useGyro = initialUseGyro;
   speed = initialSpeed;
   isPaused = false;
@@ -105,6 +111,12 @@ PGraphics createBuffer(int w, int h, String mode) {
   g.background(0);
   g.endDraw();
   return g;
+}
+
+PeasyCam createCam(PGraphics buffer) {
+  PeasyCam cam = new PeasyCam(this, buffer, 12000);
+  cam.setActive(false);
+  return cam;
 }
 
 void setupInputs() {
@@ -151,13 +163,15 @@ void draw() {
     cues.update(time);
   }
 
-  updateBackgroundBuffer();
-  boolean drew = updateRenderBuffer();
-  if (drew) {
-    updateFadeBuffer();
-    updateCompositeBuffer();
-    if (drawCompositeBuffer(lastCompositeDrawTime, time)) {
-      lastCompositeDrawTime = time;
+  if (isLongTermMode) {
+    drawLongTermBuffer();
+  } else {
+    updateBackgroundBuffer();
+    boolean drew = updateRenderBuffer();
+    if (drew) {
+      updateFadeBuffer();
+      updateCompositeBuffer();
+      drawCompositeBuffer();
     }
   }
 
@@ -188,14 +202,14 @@ boolean updateRenderBuffer() {
   renderBuffer.blendMode(BLEND);
   if (abs(speed) > 1 / renderer.rangeStepsPerYear()) {
     // Draw quantized times when moving quickly.
-    drew = renderer.drawRange(sim, renderBuffer, lastRendererDrawTime, time);
+    drew = renderer.drawRange(sim, renderBuffer, lastDrawTime, time);
     if (drew) {
-      lastRendererDrawTime = renderer.lastDrawTime();
+      lastDrawTime = renderer.lastDrawTime();
     }
   } else {
     // Draw the exact time when moving slowly.
     renderer.draw(sim, renderBuffer, time);
-    lastRendererDrawTime = time;
+    lastDrawTime = time;
     drew = true;
   }
   renderBuffer.endDraw();
@@ -225,37 +239,50 @@ void updateFadeBuffer() {
 
 void updateCompositeBuffer() {
   compositeBuffer.beginDraw();
-  //compositeBuffer.blendMode(BLEND);
-  //compositeBuffer.image(backgroundBuffer, 0, 0);
-  //compositeBuffer.blendMode(ADD);
-  compositeBuffer.background(0);
-  compositeBuffer.tint(32);
-  compositeBuffer.image(renderBuffer, 0, 0);
+  compositeBuffer.blendMode(BLEND);
+  compositeBuffer.image(backgroundBuffer, 0, 0);
+  compositeBuffer.blendMode(ADD);
+  compositeBuffer.image(fadeBuffer, 0, 0);
   compositeBuffer.endDraw();
 }
 
-boolean drawCompositeBuffer(float startTime, float endTime) {
+void drawCompositeBuffer() {
   pushStyle();
-  blendMode(ADD);
+  blendMode(BLEND);
+  image(compositeBuffer, 0, 0);
+  popStyle();
+}
 
-  float delta = endTime - startTime;
+boolean drawLongTermBuffer() {
+  float delta = time - lastDrawTime;
   if (delta == 0) {
     return false;
   }
 
-  int rangeStepsPerYear = 200;
+  int rangeStepsPerYear = 600;
   int direction = (int)(abs(delta) / delta);
-  float t = (float)ceil(startTime * rangeStepsPerYear) / rangeStepsPerYear;
+  float t = (float)ceil(lastDrawTime * rangeStepsPerYear) / rangeStepsPerYear;
+  float maxX = width - 480;
 
   boolean drew = false;
-  while ((t <= endTime) == (direction >= 0)) {
-    float x = t * 50;
-    image(compositeBuffer, x, 0, 480, 270);
+  while ((t <= time) == (direction >= 0)) {
+    float x = -(t - longTermStartTime) * 120;
+    float y = 270 * floor(x / maxX);
+    x = x % maxX;
+
+    longTermBuffer.beginDraw();
+    longTermBuffer.background(0, 0);
+    longTermRenderer.draw(sim, longTermBuffer, t);
+    longTermBuffer.endDraw();
+
+    blendMode(ADD);
+    image(longTermBuffer, x, y, 480, 270);
+
     drew = true;
+    lastDrawTime = t;
     t += 1.0 / rangeStepsPerYear * direction;
   }
 
-  popStyle();
   return drew;
 }
 
@@ -309,6 +336,13 @@ void keyReleased() {
       break;
     case 'r':
       save(fileNamer.next());
+      break;
+    case 't':
+      longTermBuffer.beginDraw();
+      longTermBuffer.background(0);
+      longTermBuffer.endDraw();
+      isLongTermMode = !isLongTermMode;
+      longTermStartTime = time;
       break;
   }
 }
