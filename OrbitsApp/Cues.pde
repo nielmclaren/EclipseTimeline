@@ -124,7 +124,7 @@ class Cues {
     CameraSetting setting = new CameraSetting()
       .pitch(radians(15))
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 2.2);
+      .dist(_sim.planetOrbitDist() * 1.8);
     _cam.animateTo(setting, durationMs);
     return this;
   }
@@ -133,7 +133,7 @@ class Cues {
     CameraSetting setting = new CameraSetting()
       .pitch(0)
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 2.2);
+      .dist(_sim.planetOrbitDist() * 1.8);
     _cam.animateTo(setting, durationMs);
     return this;
   }
@@ -142,7 +142,7 @@ class Cues {
     CameraSetting setting = new CameraSetting()
       .pitch(HALF_PI)
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 2.2);
+      .dist(_sim.planetOrbitDist() * 1.8);
     _cam.animateTo(setting, durationMs);
     return this;
   }
@@ -190,6 +190,7 @@ class Cues {
       .apsidalPrecessionPeriod(9)
       .moonRadius(50);
     _renderer
+      .showFlatMoonOrbit(false)
       .showLunarApsides(false)
       .showLunarNodes(false)
       .showOrientationCues(true)

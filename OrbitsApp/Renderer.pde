@@ -12,6 +12,8 @@ class Renderer {
   private int _rangeStepsPerYear;
   private float _lastDrawTime;
 
+  private TextureSphere _starField;
+
   private color _lineColor0 = color(83, 80, 230);
   private color _lineColor1 = color(175, 209, 252);
   private color _lineColor2 = color(17, 5, 78);
@@ -29,6 +31,8 @@ class Renderer {
 
     _rangeStepsPerYear = 200;
     _lastDrawTime = 0;
+
+    _starField = new TextureSphere(loadImage("starmap_4k.bmp"), 4000);
   }
 
   Renderer showFlatMoonOrbit(boolean v) {
@@ -85,13 +89,19 @@ class Renderer {
   }
 
   void draw(Sim sim, PGraphics g, float t) {
-    if (_showOrientationCues) {
+    draw(sim, g, t, true);
+  }
+
+  void draw(Sim sim, PGraphics g, float t, boolean isFirstDraw) {
+    if (isFirstDraw && _showOrientationCues) {
       drawOrientationCues(sim, g);
     }
 
-    drawSun(sim, g, t);
+    if (isFirstDraw && _showSun) {
+      drawSun(sim, g, t);
+    }
 
-    if (_showPlanetOrbit) {
+    if (isFirstDraw && _showPlanetOrbit) {
       drawPlanetOrbit(sim, g, t);
     }
 
@@ -133,7 +143,7 @@ class Renderer {
 
     boolean drew = false;
     while ((t <= endTime) == (direction >= 0)) {
-      draw(sim, g, t);
+      draw(sim, g, t, !drew);
       drew = true;
       _lastDrawTime = t;
       t += 1.0 / _rangeStepsPerYear * direction;
@@ -142,18 +152,10 @@ class Renderer {
   }
 
   private void drawOrientationCues(Sim sim, PGraphics g) {
-    g.pushMatrix();
-    g.pushStyle();
-
-    g.noFill();
-    g.stroke(_lineColor2);
-    g.strokeWeight(4);
-    g.rectMode(CENTER);
-
-    g.box(3000, 3000, 3000);
-
-    g.popStyle();
-    g.popMatrix();
+    buffer.pushStyle();
+    buffer.tint(139, 24, 90);
+    _starField.draw(buffer);
+    buffer.popStyle();
   }
 
   private void drawSun(Sim sim, PGraphics g, float t) {
