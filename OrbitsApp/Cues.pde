@@ -19,6 +19,10 @@ class Cues {
         intro(2000);
         break;
 
+      case "eclipse":
+        introEclipse(2000);
+        break;
+
       case "intro_synodic":
         introSynodicMonth(2000);
         break;
@@ -43,6 +47,13 @@ class Cues {
   Cues intro(long durationMs) {
     sceneDefault();
     spmExternalView(durationMs);
+    return this;
+  }
+
+  Cues introEclipse(long durationMs) {
+    sceneDefault();
+    _renderer.showPlanet(false);
+    planetView(durationMs);
     return this;
   }
 
@@ -144,13 +155,18 @@ class Cues {
     return this;
   }
 
-  private Cues planetExternal(long durationMs) {
+  private Cues planetExternalView(long durationMs) {
     _cam.followPlanetExternal(durationMs);
     return this;
   }
 
+  private Cues planetView(long durationMs) {
+    _cam.followPlanet(durationMs);
+    return this;
+  }
+
   private Cues planetLunarNodesView(long durationMs) {
-    _cam.followPlanetLunarNodesView(durationMs);
+    _cam.followPlanetLunarNodes(durationMs);
     return this;
   }
 
@@ -186,6 +202,7 @@ class Cues {
       .showLunarNodes(false)
       .showOrientationCues(true)
       .showPlanetOrbit(true)
+      .showPlanet(true)
       .showSun(true)
       .showSunPlanetLine(false);
     return this;

@@ -5,6 +5,7 @@ class Renderer {
   private boolean _showLunarNodes;
   private boolean _showMoonOrbit;
   private boolean _showOrientationCues;
+  private boolean _showPlanet;
   private boolean _showPlanetOrbit;
   private boolean _showSun;
   private boolean _showSunPlanetLine;
@@ -21,6 +22,7 @@ class Renderer {
     _showLunarNodes = true;
     _showMoonOrbit = true;
     _showOrientationCues = true;
+    _showPlanet = true;
     _showPlanetOrbit = true;
     _showSun = true;
     _showSunPlanetLine = true;
@@ -51,6 +53,11 @@ class Renderer {
 
   Renderer showOrientationCues(boolean v) {
     _showOrientationCues = v;
+    return this;
+  }
+
+  Renderer showPlanet(boolean v) {
+    _showPlanet = v;
     return this;
   }
 
@@ -92,7 +99,9 @@ class Renderer {
       drawSunPlanetLine(sim, g, t);
     }
 
-    drawPlanet(sim, g, t);
+    if (_showPlanet) {
+      drawPlanet(sim, g, t);
+    }
 
     if (_showFlatMoonOrbit) {
       drawFlatMoonOrbit(sim, g, t);

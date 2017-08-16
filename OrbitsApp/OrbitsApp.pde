@@ -61,7 +61,7 @@ void setup() {
   renderer = new Renderer();
   cues = new Cues(sim, cam, renderer);
 
-  sceneNames = new String[]{"overhead", "intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  sceneNames = new String[]{"eclipse", "overhead", "intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   selectedSceneName = "";
   cueScene(sceneNames[0]);
 

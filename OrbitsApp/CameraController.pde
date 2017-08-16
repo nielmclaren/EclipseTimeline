@@ -2,10 +2,11 @@ import peasy.org.apache.commons.math.geometry.*;
 
 class CameraController {
   private final int FOLLOW_NONE = 0;
-  private final int FOLLOW_PLANET_EXTERNAL = 1;
-  private final int FOLLOW_PLANET_OVERHEAD = 2;
-  private final int FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN = 3;
-  private final int FOLLOW_PLANET_LUNAR_NODES_VIEW = 4;
+  private final int FOLLOW_PLANET = 1;
+  private final int FOLLOW_PLANET_EXTERNAL = 2;
+  private final int FOLLOW_PLANET_OVERHEAD = 3;
+  private final int FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN = 4;
+  private final int FOLLOW_PLANET_LUNAR_NODES_VIEW = 5;
 
   private Sim _sim;
   private PeasyCam _cam;
@@ -54,6 +55,14 @@ class CameraController {
     return this;
   }
 
+  CameraController followPlanet(long durationMs) {
+    if (_followMode != FOLLOW_PLANET) {
+      _followMode = FOLLOW_PLANET;
+      setInitialAnimationProperties(durationMs);
+    }
+    return this;
+  }
+
   CameraController followPlanetExternal(long durationMs) {
     if (_followMode != FOLLOW_PLANET_EXTERNAL) {
       _followMode = FOLLOW_PLANET_EXTERNAL;
@@ -62,7 +71,7 @@ class CameraController {
     return this;
   }
 
-  CameraController followPlanetLunarNodesView(long durationMs) {
+  CameraController followPlanetLunarNodes(long durationMs) {
     if (_followMode != FOLLOW_PLANET_LUNAR_NODES_VIEW) {
       _followMode = FOLLOW_PLANET_LUNAR_NODES_VIEW;
       setInitialAnimationProperties(durationMs);
@@ -127,6 +136,8 @@ class CameraController {
 
   private CameraSetting getFollowCameraSetting(float t, int followMode) {
     switch (followMode) {
+      case FOLLOW_PLANET:
+        return getFollowPlanetCameraSetting(t);
       case FOLLOW_PLANET_EXTERNAL:
         return getFollowPlanetExternalCameraSetting(t);
       case FOLLOW_PLANET_OVERHEAD:
@@ -134,10 +145,20 @@ class CameraController {
       case FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN:
         return getFollowPlanetOverheadRelativeToSunCameraSetting(t);
       case FOLLOW_PLANET_LUNAR_NODES_VIEW:
-        return getFollowPlanetLunarNodesViewCameraSetting(t);
+        return getFollowPlanetLunarNodesCameraSetting(t);
       default:
         return new CameraSetting();
     }
+  }
+
+  private CameraSetting getFollowPlanetCameraSetting(float t) {
+    float planetRotation = normalizeAngle(HALF_PI + _sim.getPlanetRotation(t));
+    return new CameraSetting()
+      .yaw(planetRotation)
+      .pitch(0)
+      .roll(0)
+      .dist(_sim.planetOrbitDist())
+      .lookAt(_center);
   }
 
   private CameraSetting getFollowPlanetExternalCameraSetting(float t) {
@@ -169,7 +190,7 @@ class CameraController {
       .lookAt(planetPos);
   }
 
-  private CameraSetting getFollowPlanetLunarNodesViewCameraSetting(float t) {
+  private CameraSetting getFollowPlanetLunarNodesCameraSetting(float t) {
     PVector planetPos = _sim.getPlanetPosition(t);
     return new CameraSetting()
       .yaw(2 * PI * 0.625)
