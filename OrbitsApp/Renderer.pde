@@ -152,10 +152,10 @@ class Renderer {
   }
 
   private void drawOrientationCues(Sim sim, PGraphics g) {
-    buffer.pushStyle();
-    buffer.tint(139, 24, 90);
-    _starField.draw(buffer);
-    buffer.popStyle();
+    g.pushStyle();
+    g.tint(139, 24, 90);
+    _starField.draw(g);
+    g.popStyle();
   }
 
   private void drawSun(Sim sim, PGraphics g, float t) {

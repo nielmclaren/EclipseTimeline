@@ -111,7 +111,6 @@ class Cues {
       .showLunarNodes(false)
       .showFlatMoonOrbit(false)
       .showMoonOrbit(true)
-      .showOrientationCues(false)
       .showSun(true)
       .showPlanetOrbit(true)
       .showSunPlanetLine(true);
