@@ -154,7 +154,7 @@ class Sim {
     return pos;
   }
 
-  float getStarPlanetPolarDistance(float t) {
+  float getStarMoonPolarDistance(float t) {
     PVector planetPos = getPlanetPosition(t);
     PVector moonPos = getMoonPosition(t);
 

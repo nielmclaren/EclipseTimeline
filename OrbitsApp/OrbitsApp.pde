@@ -147,48 +147,11 @@ void draw() {
     cues.update(time);
   }
 
-  backgroundBuffer.beginDraw();
-  renderer.drawBackground(sim, backgroundBuffer);
-  backgroundBuffer.endDraw();
-
-  boolean drew = false;
-  renderBuffer.beginDraw();
-  renderBuffer.background(0, 0);
-  renderBuffer.blendMode(BLEND);
-  if (abs(speed) > 1 / renderer.rangeStepsPerYear()) {
-    // Draw quantized times when moving quickly.
-    drew = renderer.drawRange(sim, renderBuffer, prevTime, time);
-    if (drew) {
-      prevTime = renderer.lastDrawTime();
-    }
-  } else {
-    // Draw the exact time when moving slowly.
-    renderer.draw(sim, renderBuffer, time);
-    prevTime = time;
-    drew = true;
-  }
-  renderBuffer.endDraw();
+  updateBackgroundBuffer();
+  boolean drew = updateRenderBuffer();
+  updateFadeBuffer(drew);
 
   if (drew) {
-    fadeBuffer.beginDraw();
-    fadeBuffer.fill(0, 255 - fadeAmount);
-    fadeBuffer.rect(0, 0, width, height);
-    fadeBuffer.endDraw();
-
-    if (fadeAmount > 230) {
-      // Correct the Processing bug where it never completely fades out.
-      fadeBuffer.loadPixels();
-      for (int i = 0; i < fadeBuffer.pixels.length; i++) {
-        color pixel = fadeBuffer.pixels[i];
-        fadeBuffer.pixels[i] = brightness(pixel) < 16 ? color(0) : pixel;
-      }
-      fadeBuffer.updatePixels();
-    }
-
-    fadeBuffer.beginDraw();
-    fadeBuffer.image(renderBuffer, 0, 0);
-    fadeBuffer.endDraw();
-
     blendMode(BLEND);
     image(backgroundBuffer, 0, 0);
     blendMode(ADD);
@@ -208,9 +171,59 @@ void draw() {
   }
 }
 
+void updateBackgroundBuffer() {
+  backgroundBuffer.beginDraw();
+  renderer.drawBackground(sim, backgroundBuffer);
+  backgroundBuffer.endDraw();
+}
+
+boolean updateRenderBuffer() {
+  boolean drew = false;
+  renderBuffer.beginDraw();
+  renderBuffer.background(0, 0);
+  renderBuffer.blendMode(BLEND);
+  if (abs(speed) > 1 / renderer.rangeStepsPerYear()) {
+    // Draw quantized times when moving quickly.
+    drew = renderer.drawRange(sim, renderBuffer, prevTime, time);
+    if (drew) {
+      prevTime = renderer.lastDrawTime();
+    }
+  } else {
+    // Draw the exact time when moving slowly.
+    renderer.draw(sim, renderBuffer, time);
+    prevTime = time;
+    drew = true;
+  }
+  renderBuffer.endDraw();
+  return drew;
+}
+
+void updateFadeBuffer(boolean drew) {
+  if (drew) {
+    fadeBuffer.beginDraw();
+    fadeBuffer.fill(0, 255 - fadeAmount);
+    fadeBuffer.rect(0, 0, width, height);
+    fadeBuffer.endDraw();
+
+    if (fadeAmount > 230) {
+      // Correct the Processing bug where it never completely fades out.
+      fadeBuffer.loadPixels();
+      for (int i = 0; i < fadeBuffer.pixels.length; i++) {
+        color pixel = fadeBuffer.pixels[i];
+        fadeBuffer.pixels[i] = brightness(pixel) < 16 ? color(0) : pixel;
+      }
+      fadeBuffer.updatePixels();
+    }
+
+    fadeBuffer.beginDraw();
+    fadeBuffer.image(renderBuffer, 0, 0);
+    fadeBuffer.endDraw();
+  }
+}
+
 void updateSparklines() {
-  spDeltaHistory.add(PI - sim.getStarPlanetPolarDistance(time));
-  spDeltaLogHistory.add(pow(PI - sim.getStarPlanetPolarDistance(time), spDeltaLogPower));
+  spDeltaHistory.add(PI - sim.getStarMoonPolarDistance(time));
+  spDeltaLogHistory.add(pow(PI - sim.getStarMoonPolarDistance(time), spDeltaLogPower));
   if (spDeltaHistory.size() > spDeltaHistoryMaxSize) {
     spDeltaHistory.remove(0);
   }
