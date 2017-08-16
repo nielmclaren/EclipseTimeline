@@ -1,12 +1,13 @@
 import peasy.org.apache.commons.math.geometry.*;
 
 class CameraController {
-  private final int FOLLOW_NONE = 0;
-  private final int FOLLOW_PLANET = 1;
-  private final int FOLLOW_PLANET_EXTERNAL = 2;
-  private final int FOLLOW_PLANET_OVERHEAD = 3;
-  private final int FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN = 4;
-  private final int FOLLOW_PLANET_LUNAR_NODES_VIEW = 5;
+  private final int STATIC = 0;
+  private final int SLOW_ROTATION = 1;
+  private final int FOLLOW_PLANET = 2;
+  private final int FOLLOW_PLANET_EXTERNAL = 3;
+  private final int FOLLOW_PLANET_OVERHEAD = 4;
+  private final int FOLLOW_PLANET_OVERHEAD_RELATIVE_TO_SUN = 5;
+  private final int FOLLOW_PLANET_LUNAR_NODES_VIEW = 6;
 
   private Sim _sim;
   private PeasyCam _cam;
@@ -38,7 +39,7 @@ class CameraController {
     _durationMs = 0;
     _startTime = 0;
 
-    _followMode = FOLLOW_NONE;
+    _followMode = STATIC;
     _isLockedOnPlanetOverhead = false;
   }
 
@@ -50,8 +51,16 @@ class CameraController {
       _current = _current.merged(setting);
       setCompletedAnimationProperties();
     }
-    _followMode = FOLLOW_NONE;
+    _followMode = STATIC;
     _isLockedOnPlanetOverhead = false;
+    return this;
+  }
+
+  CameraController spmExternalRotisserie(long durationMs) {
+    if (_followMode != SLOW_ROTATION) {
+      _followMode = SLOW_ROTATION;
+      setInitialAnimationProperties(durationMs);
+    }
     return this;
   }
 
@@ -110,7 +119,7 @@ class CameraController {
   }
 
   public void update(float t) {
-    if (_followMode != FOLLOW_NONE) {
+    if (_followMode != STATIC) {
       if (_durationMs > 0) {
         updateFollowTarget(t, _followMode);
         updateAnimation();
@@ -136,6 +145,8 @@ class CameraController {
 
   private CameraSetting getFollowCameraSetting(float t, int followMode) {
     switch (followMode) {
+      case SLOW_ROTATION:
+        return getSlowRotationCameraSetting(t);
       case FOLLOW_PLANET:
         return getFollowPlanetCameraSetting(t);
       case FOLLOW_PLANET_EXTERNAL:
@@ -149,6 +160,16 @@ class CameraController {
       default:
         return new CameraSetting();
     }
+  }
+
+  private CameraSetting getSlowRotationCameraSetting(float t) {
+    float rotationsPerMillisecond = 8. / 1000;
+    return new CameraSetting()
+      .yaw((float)(millis() % (rotationsPerMillisecond)) / rotationsPerMillisecond * 2 * PI)
+      .pitch(radians(15))
+      .roll(0)
+      .dist(_sim.planetOrbitDist() * 2.2)
+      .lookAt(_center);
   }
 
   private CameraSetting getFollowPlanetCameraSetting(float t) {

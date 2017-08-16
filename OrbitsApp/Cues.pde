@@ -46,7 +46,7 @@ class Cues {
 
   Cues intro(long durationMs) {
     sceneDefault();
-    spmExternalView(durationMs);
+    spmExternalRotisserieView(durationMs);
     return this;
   }
 
@@ -117,6 +117,11 @@ class Cues {
       .showSunPlanetLine(true);
 
     spmOverheadView(durationMs);
+    return this;
+  }
+
+  private Cues spmExternalRotisserieView(long durationMs) {
+    _cam.spmExternalRotisserie(durationMs);
     return this;
   }
 
