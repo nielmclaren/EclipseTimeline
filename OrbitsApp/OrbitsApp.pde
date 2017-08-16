@@ -5,9 +5,12 @@ import processing.serial.*;
 
 GyroReader gyroReader;
 
-PGraphics buffer;
+PGraphics backgroundBuffer;
+PGraphics renderBuffer;
+PGraphics fadeBuffer;
 
 Sim sim;
+PeasyCam backgroundCam;
 PeasyCam cam;
 Renderer renderer;
 Cues cues;
@@ -23,7 +26,7 @@ float speed;
 final float initialSpeed = sqrt(0.002);
 boolean isPaused;
 int fadeAmount;
-final int initialFadeAmount = 240;
+final int initialFadeAmount = 220;
 
 ArrayList<Float> spDeltaHistory;
 ArrayList<Float> spDeltaLogHistory;
@@ -48,18 +51,23 @@ void setup() {
   printArray(Serial.list());
   gyroReader = new GyroReader(new Serial(this, Serial.list()[1], 9600));
 
-  buffer = createGraphics(width, height, P3D);
-  buffer.beginDraw();
-  buffer.background(0);
-  buffer.endDraw();
+  backgroundBuffer = createBuffer(width, height, P3D);
+  renderBuffer = createBuffer(width, height, P3D);
+  fadeBuffer = createBuffer(width, height, P3D);
+  fadeBuffer.beginDraw();
+  fadeBuffer.blendMode(BLEND);
+  fadeBuffer.noStroke();
+  fadeBuffer.endDraw();
 
   background(0);
 
   sim = new Sim();
-  cam = new PeasyCam(this, buffer, 12000);
+  backgroundCam = new PeasyCam(this, backgroundBuffer, 12000);
+  backgroundCam.setActive(false);
+  cam = new PeasyCam(this, renderBuffer, 12000);
   cam.setActive(false);
   renderer = new Renderer();
-  cues = new Cues(sim, cam, renderer);
+  cues = new Cues(sim, new PeasyCam[]{backgroundCam, cam}, renderer);
 
   sceneNames = new String[]{"eclipse", "overhead", "intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   selectedSceneName = "";
@@ -85,6 +93,14 @@ void setup() {
   gyroSparkline = new Sparkline(10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
 
   fileNamer = new FileNamer("output/frame", "png");
+}
+
+PGraphics createBuffer(int w, int h, String mode) {
+  PGraphics g = createGraphics(w, h, mode);
+  g.beginDraw();
+  g.background(0);
+  g.endDraw();
+  return g;
 }
 
 void setupInputs() {
@@ -131,32 +147,52 @@ void draw() {
     cues.update(time);
   }
 
+  backgroundBuffer.beginDraw();
+  renderer.drawBackground(sim, backgroundBuffer);
+  backgroundBuffer.endDraw();
+
   boolean drew = false;
-  buffer.beginDraw();
-  buffer.background(0, 0);
-  buffer.blendMode(ADD);
+  renderBuffer.beginDraw();
+  renderBuffer.background(0, 0);
+  renderBuffer.blendMode(BLEND);
   if (abs(speed) > 1 / renderer.rangeStepsPerYear()) {
     // Draw quantized times when moving quickly.
-    drew = renderer.drawRange(sim, buffer, prevTime, time);
+    drew = renderer.drawRange(sim, renderBuffer, prevTime, time);
     if (drew) {
       prevTime = renderer.lastDrawTime();
     }
   } else {
     // Draw the exact time when moving slowly.
-    renderer.draw(sim, buffer, time);
+    renderer.draw(sim, renderBuffer, time);
     prevTime = time;
     drew = true;
   }
-  buffer.endDraw();
+  renderBuffer.endDraw();
 
   if (drew) {
-    pushStyle();
-    noStroke();
-    fill(0, 255 - fadeAmount);
-    rect(0, 0, width, height);
-    popStyle();
+    fadeBuffer.beginDraw();
+    fadeBuffer.fill(0, 255 - fadeAmount);
+    fadeBuffer.rect(0, 0, width, height);
+    fadeBuffer.endDraw();
 
-    image(buffer, 0, 0);
+    if (fadeAmount > 230) {
+      // Correct the Processing bug where it never completely fades out.
+      fadeBuffer.loadPixels();
+      for (int i = 0; i < fadeBuffer.pixels.length; i++) {
+        color pixel = fadeBuffer.pixels[i];
+        fadeBuffer.pixels[i] = brightness(pixel) < 16 ? color(0) : pixel;
+      }
+      fadeBuffer.updatePixels();
+    }
+
+    fadeBuffer.beginDraw();
+    fadeBuffer.image(renderBuffer, 0, 0);
+    fadeBuffer.endDraw();
+
+    blendMode(BLEND);
+    image(backgroundBuffer, 0, 0);
+    blendMode(ADD);
+    image(fadeBuffer, 0, 0);
   }
 
   if (!isPaused) {
@@ -197,11 +233,11 @@ void saveAnimation() {
   int numFrames = 300;
   for (int i = 0; i < numFrames; i++) {
     float t = (float)i / numFrames;
-    buffer.beginDraw();
-    renderer.draw(sim, buffer, t);
-    buffer.endDraw();
+    renderBuffer.beginDraw();
+    renderer.draw(sim, renderBuffer, t);
+    renderBuffer.endDraw();
 
-    image(buffer, 0, 0);
+    image(renderBuffer, 0, 0);
 
     save(frameNamer.next());
   }
@@ -219,11 +255,6 @@ void keyReleased() {
       break;
     case 'a':
       saveAnimation();
-      break;
-    case 'b':
-      buffer.beginDraw();
-      buffer.background(0);
-      buffer.endDraw();
       break;
     case 'r':
       save(fileNamer.next());

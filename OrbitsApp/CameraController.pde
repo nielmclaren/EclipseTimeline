@@ -10,7 +10,7 @@ class CameraController {
   private final int FOLLOW_PLANET_LUNAR_NODES_VIEW = 6;
 
   private Sim _sim;
-  private PeasyCam _cam;
+  private PeasyCam[] _cams;
 
   private final PVector _center;
 
@@ -25,9 +25,9 @@ class CameraController {
   private int _followMode;
   private boolean _isLockedOnPlanetOverhead;
 
-  CameraController(Sim sim, PeasyCam cam) {
+  CameraController(Sim sim, PeasyCam[] cams) {
     _sim = sim;
-    _cam = cam;
+    _cams = cams;
 
     _center = new PVector(0, 0, 0);
 
@@ -277,7 +277,10 @@ class CameraController {
     Vector3D lookAt = toVector3D(_current.lookAt());
     Rotation rotation = new Rotation(RotationOrder.YXZ,
       _current.yaw(), _current.pitch(), _current.roll());
-    _cam.setState(new CameraState(rotation, lookAt, _current.dist()), 0);
+    CameraState state = new CameraState(rotation, lookAt, _current.dist());
+    for (int i = 0; i < _cams.length; i++) {
+      _cams[i].setState(state, 0);
+    }
   }
 
   private Vector3D toVector3D(PVector v) {

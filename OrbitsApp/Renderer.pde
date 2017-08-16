@@ -4,7 +4,6 @@ class Renderer {
   private boolean _showLunarApsides;
   private boolean _showLunarNodes;
   private boolean _showMoonOrbit;
-  private boolean _showOrientationCues;
   private boolean _showPlanet;
   private boolean _showPlanetOrbit;
   private boolean _showSun;
@@ -23,7 +22,6 @@ class Renderer {
     _showLunarApsides = true;
     _showLunarNodes = true;
     _showMoonOrbit = true;
-    _showOrientationCues = true;
     _showPlanet = true;
     _showPlanetOrbit = true;
     _showSun = true;
@@ -55,11 +53,6 @@ class Renderer {
     return this;
   }
 
-  Renderer showOrientationCues(boolean v) {
-    _showOrientationCues = v;
-    return this;
-  }
-
   Renderer showPlanet(boolean v) {
     _showPlanet = v;
     return this;
@@ -88,15 +81,18 @@ class Renderer {
     return _lastDrawTime;
   }
 
+  void drawBackground(Sim sim, PGraphics g) {
+    g.pushStyle();
+    g.tint(139, 24, 90);
+    _starField.draw(g);
+    g.popStyle();
+  }
+
   void draw(Sim sim, PGraphics g, float t) {
     draw(sim, g, t, true);
   }
 
   void draw(Sim sim, PGraphics g, float t, boolean isFirstDraw) {
-    if (isFirstDraw && _showOrientationCues) {
-      drawOrientationCues(sim, g);
-    }
-
     if (isFirstDraw && _showSun) {
       drawSun(sim, g, t);
     }
@@ -149,13 +145,6 @@ class Renderer {
       t += 1.0 / _rangeStepsPerYear * direction;
     }
     return drew;
-  }
-
-  private void drawOrientationCues(Sim sim, PGraphics g) {
-    g.pushStyle();
-    g.tint(139, 24, 90);
-    _starField.draw(g);
-    g.popStyle();
   }
 
   private void drawSun(Sim sim, PGraphics g, float t) {

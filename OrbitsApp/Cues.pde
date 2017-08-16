@@ -5,9 +5,9 @@ class Cues {
   private CameraController _cam;
   private Renderer _renderer;
 
-  Cues(Sim sim, PeasyCam cam, Renderer renderer) {
+  Cues(Sim sim, PeasyCam[] cams, Renderer renderer) {
     _sim = sim;
-    _cam = new CameraController(sim, cam);
+    _cam = new CameraController(sim, cams);
     _renderer = renderer;
 
     sceneDefault();
@@ -197,7 +197,6 @@ class Cues {
       .showFlatMoonOrbit(false)
       .showLunarApsides(false)
       .showLunarNodes(false)
-      .showOrientationCues(true)
       .showPlanetOrbit(true)
       .showPlanet(true)
       .showSun(true)
