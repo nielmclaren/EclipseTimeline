@@ -8,6 +8,7 @@ GyroReader gyroReader;
 PGraphics backgroundBuffer;
 PGraphics renderBuffer;
 PGraphics fadeBuffer;
+PGraphics compositeBuffer;
 
 Sim sim;
 PeasyCam backgroundCam;
@@ -19,7 +20,8 @@ String[] sceneNames;
 String selectedSceneName;
 
 float time;
-float prevTime;
+float lastRendererDrawTime;
+float lastCompositeDrawTime;
 boolean useGyro;
 final boolean initialUseGyro = true;
 float speed;
@@ -58,6 +60,7 @@ void setup() {
   fadeBuffer.blendMode(BLEND);
   fadeBuffer.noStroke();
   fadeBuffer.endDraw();
+  compositeBuffer = createBuffer(width, height, P3D);
 
   background(0);
 
@@ -69,12 +72,13 @@ void setup() {
   renderer = new Renderer();
   cues = new Cues(sim, new PeasyCam[]{backgroundCam, cam}, renderer);
 
-  sceneNames = new String[]{"eclipse", "overhead", "intro", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  sceneNames = new String[]{"overhead", "intro", "eclipse", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   selectedSceneName = "";
   cueScene(sceneNames[0]);
 
   time = 0;
-  prevTime = 0;
+  lastRendererDrawTime = 0;
+  lastCompositeDrawTime = 0;
   useGyro = initialUseGyro;
   speed = initialSpeed;
   isPaused = false;
@@ -149,19 +153,19 @@ void draw() {
 
   updateBackgroundBuffer();
   boolean drew = updateRenderBuffer();
-  updateFadeBuffer(drew);
-
   if (drew) {
-    blendMode(BLEND);
-    image(backgroundBuffer, 0, 0);
-    blendMode(ADD);
-    image(fadeBuffer, 0, 0);
+    updateFadeBuffer();
+    updateCompositeBuffer();
+    if (drawCompositeBuffer(lastCompositeDrawTime, time)) {
+      lastCompositeDrawTime = time;
+    }
   }
 
   if (!isPaused) {
     updateSparklines();
   }
 
+  blendMode(BLEND);
   text(frameRate + " fps", 20, 20);
   text(selectedSceneName, 20, 40);
   drawSparklines();
@@ -184,41 +188,75 @@ boolean updateRenderBuffer() {
   renderBuffer.blendMode(BLEND);
   if (abs(speed) > 1 / renderer.rangeStepsPerYear()) {
     // Draw quantized times when moving quickly.
-    drew = renderer.drawRange(sim, renderBuffer, prevTime, time);
+    drew = renderer.drawRange(sim, renderBuffer, lastRendererDrawTime, time);
     if (drew) {
-      prevTime = renderer.lastDrawTime();
+      lastRendererDrawTime = renderer.lastDrawTime();
     }
   } else {
     // Draw the exact time when moving slowly.
     renderer.draw(sim, renderBuffer, time);
-    prevTime = time;
+    lastRendererDrawTime = time;
     drew = true;
   }
   renderBuffer.endDraw();
   return drew;
 }
 
-void updateFadeBuffer(boolean drew) {
-  if (drew) {
-    fadeBuffer.beginDraw();
-    fadeBuffer.fill(0, 255 - fadeAmount);
-    fadeBuffer.rect(0, 0, width, height);
-    fadeBuffer.endDraw();
+void updateFadeBuffer() {
+  fadeBuffer.beginDraw();
+  fadeBuffer.fill(0, 255 - fadeAmount);
+  fadeBuffer.rect(0, 0, width, height);
+  fadeBuffer.endDraw();
 
-    if (fadeAmount > 230) {
-      // Correct the Processing bug where it never completely fades out.
-      fadeBuffer.loadPixels();
-      for (int i = 0; i < fadeBuffer.pixels.length; i++) {
-        color pixel = fadeBuffer.pixels[i];
-        fadeBuffer.pixels[i] = brightness(pixel) < 16 ? color(0) : pixel;
-      }
-      fadeBuffer.updatePixels();
+  if (fadeAmount > 230) {
+    // Correct the Processing bug where it never completely fades out.
+    fadeBuffer.loadPixels();
+    for (int i = 0; i < fadeBuffer.pixels.length; i++) {
+      color pixel = fadeBuffer.pixels[i];
+      fadeBuffer.pixels[i] = brightness(pixel) < 16 ? color(0) : pixel;
     }
-
-    fadeBuffer.beginDraw();
-    fadeBuffer.image(renderBuffer, 0, 0);
-    fadeBuffer.endDraw();
+    fadeBuffer.updatePixels();
   }
+
+  fadeBuffer.beginDraw();
+  fadeBuffer.image(renderBuffer, 0, 0);
+  fadeBuffer.endDraw();
+}
+
+void updateCompositeBuffer() {
+  compositeBuffer.beginDraw();
+  //compositeBuffer.blendMode(BLEND);
+  //compositeBuffer.image(backgroundBuffer, 0, 0);
+  //compositeBuffer.blendMode(ADD);
+  compositeBuffer.background(0);
+  compositeBuffer.tint(32);
+  compositeBuffer.image(renderBuffer, 0, 0);
+  compositeBuffer.endDraw();
+}
+
+boolean drawCompositeBuffer(float startTime, float endTime) {
+  pushStyle();
+  blendMode(ADD);
+
+  float delta = endTime - startTime;
+  if (delta == 0) {
+    return false;
+  }
+
+  int rangeStepsPerYear = 200;
+  int direction = (int)(abs(delta) / delta);
+  float t = (float)ceil(startTime * rangeStepsPerYear) / rangeStepsPerYear;
+
+  boolean drew = false;
+  while ((t <= endTime) == (direction >= 0)) {
+    float x = t * 50;
+    image(compositeBuffer, x, 0, 480, 270);
+    drew = true;
+    t += 1.0 / rangeStepsPerYear * direction;
+  }
+
+  popStyle();
+  return drew;
 }
 
 void updateSparklines() {
