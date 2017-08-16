@@ -43,7 +43,7 @@ FileNamer fileNamer;
 
 
 void setup() {
-  size(800, 800, P3D);
+  fullScreen(P3D);
 
   printArray(Serial.list());
   gyroReader = new GyroReader(new Serial(this, Serial.list()[1], 9600));
@@ -80,9 +80,9 @@ void setup() {
   spDeltaLogHistory = new ArrayList<Float>();
   spDeltaLogPower = 7;
   spDeltaHistoryMaxSize = 2000;
-  spDeltaSparkline = new Sparkline(10, 0.7 * height, width - 20, 0.08 * height);
-  spDeltaLogSparkline = new Sparkline(10, 0.8 * height, width - 20, 0.08 * height);
-  gyroSparkline = new Sparkline(10, 0.9 * height, width - 20, 0.08 * height);
+  spDeltaSparkline = new Sparkline(10, 0.85 * height, width * 0.25 - 20, 0.04 * height);
+  spDeltaLogSparkline = new Sparkline(10, 0.9 * height, width * 0.25 - 20, 0.04 * height);
+  gyroSparkline = new Sparkline(10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
 
   fileNamer = new FileNamer("output/frame", "png");
 }
