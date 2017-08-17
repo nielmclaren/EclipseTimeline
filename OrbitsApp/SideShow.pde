@@ -73,6 +73,10 @@ class SideShow {
     return this;
   }
 
+  float getStarMoonPolarDistance() {
+    return _sim.getStarMoonPolarDistance(_time);
+  }
+
   boolean update() {
     float v = map(_gyroReader.magnitude(_id), 0, gyroReader.MAX_VALUE, 0.0002, 0.5);
     _speed = -_gyroReader.direction(_id) * v * v;

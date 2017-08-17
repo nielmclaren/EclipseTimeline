@@ -64,6 +64,11 @@ FileNamer fileNamer;
 void setup() {
   fullScreen(P3D);
 
+  Palette.lineColor0 = color(83, 80, 230);
+  Palette.lineColor1 = color(175, 209, 252);
+  Palette.lineColor2 = color(17, 5, 78);
+  Palette.lineColor3 = color(139, 24, 90);
+
   mainWidth = floor(width * 0.7);
   mainHeight = floor(height);
   sideWidth = floor(width * 0.3);
@@ -116,7 +121,7 @@ void setup() {
   String[] sideBarSceneNames = new String[]{"intro", "eclipse", "intro_draconic"};
   topRightShow = new SideShow(1, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames).cue("eclipse");
   midRightShow = new SideShow(2, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames).cue("draconic");
-  
+
   cp5 = new ControlP5(this);
   
   setupInputs();
@@ -351,7 +356,7 @@ void drawSideBar() {
   image(midRightShow.renderBuffer(), x, h * 1);
 
   noFill();
-  stroke(64);
+  stroke(Palette.lineColor2);
   strokeWeight(2);
   rect(x, h * 0, sideWidth, sideHeight);
   rect(x, h * 1, sideWidth, sideHeight);
@@ -360,14 +365,23 @@ void drawSideBar() {
 void updateSparklines() {
   for (int i = 0; i < gyroReader.NUM_GYROS; i++) {
     ArrayList<Float> spDeltaHistory = spDeltaHistoryMap.get(i);
+    ArrayList<Float> spDeltaLogHistory = spDeltaLogHistoryMap.get(i);
 
-    spDeltaHistory.add(PI - sim.getStarMoonPolarDistance(time));
+    float dist = 0;
+    if (i == 0) {
+      dist = sim.getStarMoonPolarDistance(time);
+    } else if (i == 1) {
+      dist = topRightShow.getStarMoonPolarDistance();
+    } else {
+      dist = midRightShow.getStarMoonPolarDistance();
+    }
+
+    spDeltaHistory.add(dist);
     if (spDeltaHistory.size() > spDeltaHistoryMaxSize) {
       spDeltaHistory.remove(0);
     }
 
-    ArrayList<Float> spDeltaLogHistory = spDeltaLogHistoryMap.get(i);
-    spDeltaLogHistory.add(pow(PI - sim.getStarMoonPolarDistance(time), spDeltaLogPower));
+    spDeltaLogHistory.add(pow(PI - dist, spDeltaLogPower));
     if (spDeltaLogHistory.size() > spDeltaHistoryMaxSize) {
       spDeltaLogHistory.remove(0);
     }
