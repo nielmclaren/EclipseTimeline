@@ -3,6 +3,7 @@ class LongTermRenderer {
   private color _lineColor0 = color(83, 80, 230);
   private color _lineColor1 = color(175, 209, 252);
   private color _lineColor2 = color(17, 5, 78);
+  private color _lineColor3 = color(139, 24, 90);
 
   LongTermRenderer() {
   }
@@ -22,9 +23,9 @@ class LongTermRenderer {
     g.strokeWeight(1);
 
     if (sim.isEclipse(t)) {
-      g.stroke(transpare(_lineColor0, 192));
+      g.stroke(transpare(_lineColor3, 192));
     } else {
-      g.stroke(transpare(_lineColor0, 12));
+      g.stroke(transpare(_lineColor3, 12));
     }
 
     g.sphereDetail(20);
@@ -64,7 +65,7 @@ class LongTermRenderer {
       g.stroke(transpare(_lineColor1, 128));
       g.strokeWeight(16);
     } else {
-      g.stroke(transpare(_lineColor0, 32));
+      g.stroke(transpare(_lineColor3, 32));
       g.strokeWeight(1);
     }
 
@@ -86,9 +87,9 @@ class LongTermRenderer {
     g.noFill();
 
     if (sim.isEclipse(t)) {
-      g.stroke(transpare(_lineColor1, 192));
+      g.stroke(transpare(_lineColor0, 240));
     } else {
-      g.stroke(transpare(_lineColor1, 8));
+      g.stroke(transpare(_lineColor0, 16));
     }
 
     g.sphereDetail(20);
@@ -109,9 +110,9 @@ class LongTermRenderer {
     g.translate(moonPos.x, moonPos.y, moonPos.z);
     
     if (sim.isEclipse(t)) {
-      g.stroke(transpare(_lineColor0, 192));
+      g.stroke(transpare(_lineColor1, 240));
     } else {
-      g.stroke(transpare(_lineColor0, 32));
+      g.stroke(transpare(_lineColor1, 16));
     }
 
     g.sphereDetail(12);

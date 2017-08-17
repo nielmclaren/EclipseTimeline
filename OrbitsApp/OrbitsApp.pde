@@ -93,7 +93,7 @@ void setup() {
   longTermRenderer = new LongTermRenderer();
   cues = new Cues(sim, new PeasyCam[]{backgroundCam, renderCam, longTermRenderCam, longTermCam}, renderer);
 
-  sceneNames = new String[]{"overhead", "intro", "eclipse", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  sceneNames = new String[]{"intro", "eclipse", "overhead", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   selectedSceneName = "";
   cueScene(sceneNames[0]);
 
@@ -325,7 +325,7 @@ void drawSideBar() {
   image(midRightShow.renderBuffer(), x, sideHeight * 1);
 
   noFill();
-  stroke(255);
+  stroke(64);
   strokeWeight(2);
   rect(x, sideHeight * 0, sideWidth, sideHeight);
   rect(x, sideHeight * 1, sideWidth, sideHeight);
@@ -368,6 +368,7 @@ void keyReleased() {
       save(fileNamer.next());
       break;
     case 't':
+      cueScene("overhead");
       background(0);
       longTermRenderBuffer.beginDraw();
       longTermRenderBuffer.background(0);

@@ -16,6 +16,7 @@ class Renderer {
   private color _lineColor0 = color(83, 80, 230);
   private color _lineColor1 = color(175, 209, 252);
   private color _lineColor2 = color(17, 5, 78);
+  private color _lineColor3 = color(139, 24, 90);
 
   Renderer() {
     reset();
@@ -159,7 +160,7 @@ class Renderer {
     g.pushStyle();
     
     g.noFill();
-    g.stroke(_lineColor0);
+    g.stroke(_lineColor3);
     g.strokeWeight(1);
     g.sphereDetail(20);
     g.sphere(sim.sunRadius());
@@ -193,7 +194,7 @@ class Renderer {
     g.pushStyle();
     
     g.noFill();
-    g.stroke(_lineColor0);
+    g.stroke(_lineColor3);
     g.strokeWeight(1);
 
     g.line(0, 0, 0, planetPos.x, planetPos.y, planetPos.z);
@@ -212,7 +213,7 @@ class Renderer {
 
     g.pushStyle();
     g.noFill();
-    g.stroke(_lineColor1);
+    g.stroke(_lineColor0);
 
     g.sphereDetail(20);
     g.sphere(sim.planetRadius());
@@ -377,7 +378,7 @@ class Renderer {
 
     g.translate(moonPos.x, moonPos.y, moonPos.z);
     
-    g.stroke(_lineColor0);
+    g.stroke(_lineColor1);
     g.noFill();
     g.sphereDetail(12);
     g.sphere(sim.moonRadius());
