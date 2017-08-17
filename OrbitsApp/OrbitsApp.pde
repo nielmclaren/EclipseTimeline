@@ -68,6 +68,8 @@ void setup() {
   background(0);
 
   sim = new Sim();
+  sim.printPotentialSarosCycles();
+
   PeasyCam backgroundCam = createCam(backgroundBuffer);
   PeasyCam renderCam = createCam(renderBuffer);
   PeasyCam longTermCam = createCam(longTermBuffer);

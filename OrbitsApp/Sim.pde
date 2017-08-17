@@ -11,6 +11,7 @@ class Sim {
   private float _lunarOrbitPeriod;
   private float _apsidalPrecessionPeriod;
   private float _moonRadius;
+  private float _sarosCycle;
 
   Sim() {
     _sunRadius = 330;
@@ -22,8 +23,11 @@ class Sim {
     _lunarOrbitInclineRad = radians(20);//radians(5.1);
     _nodalPrecessionPeriod = 18.6;
     _lunarOrbitPeriod = 1. / 12;
-    _apsidalPrecessionPeriod = 9;
+    _apsidalPrecessionPeriod = 14.2;
     _moonRadius = 50;
+    
+    // Calculate from the synodic, anomalistic, and draconic months.
+    _sarosCycle = 22.000000685733248;
   }
 
   float sunRadius() {
@@ -125,6 +129,10 @@ class Sim {
     return this;
   }
 
+  double sarosCycle() {
+    return _sarosCycle;
+  }
+
   float getPlanetRotation(float t) {
     return map(t % 1, 0, 1, 0, TWO_PI);
   }
@@ -180,5 +188,72 @@ class Sim {
 
   boolean isEclipse(float t) {
     return getStarMoonPolarDistance(t) < radians(5);
+  }
+
+  double getSiderealMonth() {
+    return _lunarOrbitPeriod;
+  }
+
+  double getSynodicMonth() {
+    return _lunarOrbitPeriod * (1 - _lunarOrbitPeriod);
+  }
+
+  double getAnomalisticMonth() {
+    return _lunarOrbitPeriod - _lunarOrbitPeriod / _apsidalPrecessionPeriod;
+  }
+
+  double getDraconicMonth() {
+    return _lunarOrbitPeriod - _lunarOrbitPeriod / _nodalPrecessionPeriod;
+  }
+
+  void printPotentialSarosCycles() {
+    double maxError = 1./365.25/24 * 3;
+
+    double apsidalPrecessionPeriod = 9.8;
+    double nodalPrecessionPeriod = 18.6;
+
+    for (int j = 0; j < 1000; j++) {
+      double synodicMonth = getSynodicMonth();
+      double anomalisticMonth = _lunarOrbitPeriod * (1 - 1 / apsidalPrecessionPeriod);//getAnomalisticMonth();
+      double draconicMonth = _lunarOrbitPeriod * (1 - 1 / 18.6);//getDraconicMonth();
+
+      int synodicCount = 1;
+      int anomalisticCount = 1;
+      int draconicCount = 1;
+
+      for (int i = 0; i < 1000; i++) {
+        double s = synodicMonth * synodicCount;
+        double a = anomalisticMonth * anomalisticCount;
+        double d = draconicMonth * draconicCount;
+        if (a < s && a < d) {
+          anomalisticCount++;
+        } else if (d < s && d < a) {
+          draconicCount++;
+        } else {
+          synodicCount++;
+        }
+
+        if (getError(s, a) < maxError && getError(s, d) < maxError && getError(a, d) < maxError) {
+          if (s < 15) {
+            break;
+          }
+          println(apsidalPrecessionPeriod, nodalPrecessionPeriod);
+          println(">", s, a, d);
+          println((s - java.lang.Math.floor(s)) * 365.25);
+          println();
+          break;
+        }
+      }
+
+      if (j % 2 == 0) {
+        apsidalPrecessionPeriod += 0.1;
+      } else {
+        nodalPrecessionPeriod += 0.1;
+      }
+    }
+  }
+
+  private double getError(double a, double b) {
+    return java.lang.Math.abs(a - b);
   }
 }
