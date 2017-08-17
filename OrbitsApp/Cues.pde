@@ -31,16 +31,16 @@ class Cues {
         introEclipse(2000);
         break;
 
-      case "intro_synodic":
-        introSynodicMonth(2000);
+      case "synodic":
+        synodicMonth(2000);
         break;
 
-      case "intro_anomalistic":
-        introAnomalisticMonth(2000);
+      case "anomalistic":
+        anomalisticMonth(2000);
         break;
         
-      case "intro_draconic":
-        introDraconicMonth(2000);
+      case "draconic":
+        draconicMonth(2000);
         break;
 
       case "overhead":
@@ -65,7 +65,7 @@ class Cues {
     return this;
   }
 
-  Cues introSynodicMonth(long durationMs) {
+  Cues synodicMonth(long durationMs) {
     sceneDefault();
     _sim
       .moonMajorAxis(475)
@@ -77,11 +77,11 @@ class Cues {
       .showPlanetOrbit(true)
       .showSunPlanetLine(true);
 
-    planetOverheadRelativeToSun(durationMs);
+    planetOverhead(durationMs);
     return this;
   }
 
-  Cues introAnomalisticMonth(long durationMs) {
+  Cues anomalisticMonth(long durationMs) {
     sceneDefault();
     _sim
       .apsidalPrecessionPeriod(3)
@@ -96,7 +96,7 @@ class Cues {
     return this;
   }
 
-  Cues introDraconicMonth(long durationMs) {
+  Cues draconicMonth(long durationMs) {
     sceneDefault();
     _renderer
       .showFlatMoonOrbit(true)

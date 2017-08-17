@@ -9,6 +9,9 @@ int mainWidth;
 int mainHeight;
 int sideWidth;
 int sideHeight;
+int sparklineHeight;
+int sparklineSpacing;
+int sideSpacing;
 
 PGraphics backgroundBuffer;
 PGraphics renderBuffer;
@@ -41,8 +44,8 @@ final int initialFadeAmount = 220;
 SideShow topRightShow;
 SideShow midRightShow;
 
-ArrayList<Float> spDeltaHistory;
-ArrayList<Float> spDeltaLogHistory;
+Map<Integer, ArrayList<Float>> spDeltaHistoryMap;
+Map<Integer, ArrayList<Float>> spDeltaLogHistoryMap;
 float spDeltaLogPower;
 int spDeltaHistoryMaxSize;
 
@@ -51,8 +54,8 @@ Toggle useGyroInput;
 Slider speedInput;
 Slider fadeInput;
 Slider lunarOrbitInclineInput;
-Sparkline spDeltaSparkline;
-Sparkline spDeltaLogSparkline;
+Sparkline[] spDeltaSparklines;
+Sparkline[] spDeltaLogSparklines;
 Sparkline[] gyroSparklines;
 
 FileNamer fileNamer;
@@ -65,6 +68,9 @@ void setup() {
   mainHeight = floor(height);
   sideWidth = floor(width * 0.3);
   sideHeight = floor(height * 1/3);
+  sparklineHeight = 50;
+  sparklineSpacing = 4;
+  sideSpacing = 15;
 
   printArray(Serial.list());
   gyroReader = new GyroReader(new Serial(this, Serial.list()[1], 9600));
@@ -93,9 +99,9 @@ void setup() {
   longTermRenderer = new LongTermRenderer();
   cues = new Cues(sim, new PeasyCam[]{backgroundCam, renderCam, longTermRenderCam, longTermCam}, renderer);
 
-  sceneNames = new String[]{"intro", "eclipse", "overhead", "intro_synodic", "intro_anomalistic", "intro_draconic"};
+  sceneNames = new String[]{"intro", "eclipse", "overhead", "synodic", "anomalistic", "draconic"};
   selectedSceneName = "";
-  cueScene(sceneNames[0]);
+  cueScene("intro");
 
   time = 0;
   lastDrawTime = 0;
@@ -108,23 +114,41 @@ void setup() {
   fadeAmount = initialFadeAmount;
 
   String[] sideBarSceneNames = new String[]{"intro", "eclipse", "intro_draconic"};
-  topRightShow = new SideShow(1, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames);
-  midRightShow = new SideShow(2, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames);
+  topRightShow = new SideShow(1, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames).cue("eclipse");
+  midRightShow = new SideShow(2, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames).cue("draconic");
   
   cp5 = new ControlP5(this);
   
   setupInputs();
 
-  spDeltaHistory = new ArrayList<Float>();
-  spDeltaLogHistory = new ArrayList<Float>();
+  spDeltaHistoryMap = new HashMap<Integer, ArrayList<Float>>();
+  spDeltaLogHistoryMap = new HashMap<Integer, ArrayList<Float>>();
   spDeltaLogPower = 7;
   spDeltaHistoryMaxSize = 2000;
-  spDeltaSparkline = new Sparkline(10, 0.85 * height, width * 0.25 - 20, 0.04 * height);
-  spDeltaLogSparkline = new Sparkline(10, 0.9 * height, width * 0.25 - 20, 0.04 * height);
+
+  for (int i = 0; i < gyroReader.NUM_GYROS; i++) {
+    spDeltaHistoryMap.put(i, new ArrayList<Float>());
+    spDeltaLogHistoryMap.put(i, new ArrayList<Float>());
+  }
+
+  float x = width - sideWidth;
+  float h = (sideHeight + 3 * sparklineHeight + 3 * sparklineSpacing + sideSpacing);
+
+  spDeltaSparklines = new Sparkline[3];
+  spDeltaLogSparklines = new Sparkline[3];
   gyroSparklines = new Sparkline[3];
-  gyroSparklines[0] = new Sparkline(width * 0.00 + 10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
-  gyroSparklines[1] = new Sparkline(width * 0.25 + 10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
-  gyroSparklines[2] = new Sparkline(width * 0.50 + 10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
+
+  spDeltaSparklines[0] = new Sparkline(5, height - 3 * (sparklineHeight + sparklineSpacing), sideWidth, sparklineHeight);
+  spDeltaLogSparklines[0] = new Sparkline(5, height - 2 * (sparklineHeight + sparklineSpacing), sideWidth, sparklineHeight);
+  gyroSparklines[0] = new Sparkline(5, height - (sparklineHeight + sparklineSpacing), sideWidth, sparklineHeight);
+
+  spDeltaSparklines[1] = new Sparkline(x, sideHeight + sparklineSpacing, sideWidth, sparklineHeight);
+  spDeltaLogSparklines[1] = new Sparkline(x, sideHeight + 2 * sparklineSpacing + sparklineHeight, sideWidth, sparklineHeight);
+  gyroSparklines[1] = new Sparkline(x, sideHeight + 3 * sparklineSpacing + 2 * sparklineHeight, sideWidth, sparklineHeight);
+
+  spDeltaSparklines[2] = new Sparkline(x, h + sideHeight + sparklineSpacing, sideWidth, sparklineHeight);
+  spDeltaLogSparklines[2] = new Sparkline(x, h + sideHeight + 2 * sparklineSpacing + sparklineHeight, sideWidth, sparklineHeight);
+  gyroSparklines[2] = new Sparkline(x, h + sideHeight + 3 * sparklineSpacing + 2 * sparklineHeight, sideWidth, sparklineHeight);
 
   fileNamer = new FileNamer("output/frame", "png");
 }
@@ -321,35 +345,59 @@ boolean drawLongTermBuffer() {
 
 void drawSideBar() {
   float x = width - sideWidth;
-  image(topRightShow.renderBuffer(), x, sideHeight * 0);
-  image(midRightShow.renderBuffer(), x, sideHeight * 1);
+  float h = (sideHeight + 3 * sparklineHeight + 3 * sparklineSpacing + sideSpacing);
+
+  image(topRightShow.renderBuffer(), x, h * 0);
+  image(midRightShow.renderBuffer(), x, h * 1);
 
   noFill();
   stroke(64);
   strokeWeight(2);
-  rect(x, sideHeight * 0, sideWidth, sideHeight);
-  rect(x, sideHeight * 1, sideWidth, sideHeight);
-  rect(x, sideHeight * 2, sideWidth, sideHeight);
+  rect(x, h * 0, sideWidth, sideHeight);
+  rect(x, h * 1, sideWidth, sideHeight);
 }
 
 void updateSparklines() {
-  spDeltaHistory.add(PI - sim.getStarMoonPolarDistance(time));
-  spDeltaLogHistory.add(pow(PI - sim.getStarMoonPolarDistance(time), spDeltaLogPower));
-  if (spDeltaHistory.size() > spDeltaHistoryMaxSize) {
-    spDeltaHistory.remove(0);
+  for (int i = 0; i < gyroReader.NUM_GYROS; i++) {
+    ArrayList<Float> spDeltaHistory = spDeltaHistoryMap.get(i);
+
+    spDeltaHistory.add(PI - sim.getStarMoonPolarDistance(time));
+    if (spDeltaHistory.size() > spDeltaHistoryMaxSize) {
+      spDeltaHistory.remove(0);
+    }
+
+    ArrayList<Float> spDeltaLogHistory = spDeltaLogHistoryMap.get(i);
+    spDeltaLogHistory.add(pow(PI - sim.getStarMoonPolarDistance(time), spDeltaLogPower));
+    if (spDeltaLogHistory.size() > spDeltaHistoryMaxSize) {
+      spDeltaLogHistory.remove(0);
+    }
   }
-  if (spDeltaLogHistory.size() > spDeltaHistoryMaxSize) {
-    spDeltaLogHistory.remove(0);
-  }
+
   gyroReader.update();
 }
 
 void drawSparklines() {
-  spDeltaSparkline.draw(g, spDeltaHistory, spDeltaHistoryMaxSize, 0, PI);
-  spDeltaLogSparkline.draw(g, spDeltaLogHistory, spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
   for (int i = 0; i < gyroSparklines.length; i++) {
+    spDeltaSparklines[i].draw(g, spDeltaHistoryMap.get(i), spDeltaHistoryMaxSize, 0, PI);
+    spDeltaLogSparklines[i].draw(g, spDeltaLogHistoryMap.get(i), spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
     gyroSparklines[i].draw(g, gyroReader.magnitudeHistory(i), gyroReader.MAX_READINGS, 0, gyroReader.MAX_VALUE);
   }
+}
+
+void initLongTermMode() {
+  cueScene("overhead");
+  background(0);
+  longTermRenderBuffer.beginDraw();
+  longTermRenderBuffer.background(0);
+  longTermRenderBuffer.endDraw();
+  longTermBuffer.beginDraw();
+  longTermBuffer.background(0);
+  longTermBuffer.endDraw();
+}
+
+void cueScene(String sceneName) {
+  cues.cue(sceneName);
+  selectedSceneName = sceneName;
 }
 
 void keyReleased() {
@@ -368,16 +416,11 @@ void keyReleased() {
       save(fileNamer.next());
       break;
     case 't':
-      cueScene("overhead");
-      background(0);
-      longTermRenderBuffer.beginDraw();
-      longTermRenderBuffer.background(0);
-      longTermRenderBuffer.endDraw();
-      longTermBuffer.beginDraw();
-      longTermBuffer.background(0);
-      longTermBuffer.endDraw();
       isLongTermMode = !isLongTermMode;
       longTermStartTime = time;
+      if (isLongTermMode) {
+        initLongTermMode();
+      }
       println("Long term mode:", isLongTermMode);
       break;
   }
@@ -418,9 +461,4 @@ void controlEvent(ControlEvent e) {
       cueScene(sceneNames[i]);
     }
   }
-}
-
-void cueScene(String sceneName) {
-  cues.cue(sceneName);
-  selectedSceneName = sceneName;
 }

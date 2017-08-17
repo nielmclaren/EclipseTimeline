@@ -48,6 +48,11 @@ class SideShow {
     _isPaused = false;
   }
 
+  SideShow cue(String sceneName) {
+    _cues.cue(sceneName);
+    return this;
+  }
+
   SideShow gyroReader(GyroReader v) {
     _gyroReader = v;
     return this;
