@@ -246,6 +246,7 @@ class Renderer {
   private void drawMoonOrbit(Sim sim, PGraphics g, float t) {
     PVector planetPos = sim.getPlanetPosition(t);
     float apsidalPrecessionTime = t / sim.apsidalPrecessionPeriod();
+    float nodalPrecessionTime = t / sim.nodalPrecessionPeriod();
 
     float a = sim.moonMajorAxis() / 2;
     float b = sim.moonMinorAxis() / 2;
@@ -265,7 +266,9 @@ class Renderer {
 
     g.pushMatrix();
     g.rotateZ(HALF_PI);
+    g.rotateZ(nodalPrecessionTime * 2 * PI);
     g.rotateX(sim.lunarOrbitInclineRad());
+    g.rotateZ(-nodalPrecessionTime * 2 * PI);
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
     g.ellipse(0, 0, sim.moonMajorAxis(), sim.moonMinorAxis());
@@ -279,6 +282,7 @@ class Renderer {
   private void drawLunarApsides(Sim sim, PGraphics g, float t) {
     PVector planetPos = sim.getPlanetPosition(t);
     float apsidalPrecessionTime = t / sim.apsidalPrecessionPeriod();
+    float nodalPrecessionTime = t / sim.nodalPrecessionPeriod();
 
     float a = sim.moonMajorAxis() / 2;
     float b = sim.moonMinorAxis() / 2;
@@ -294,7 +298,9 @@ class Renderer {
     g.translate(planetPos.x, planetPos.y, planetPos.z);
     g.rotateX(HALF_PI);
     g.rotateZ(HALF_PI);
+    g.rotateZ(nodalPrecessionTime * 2 * PI);
     g.rotateX(sim.lunarOrbitInclineRad());
+    g.rotateZ(-nodalPrecessionTime * 2 * PI);
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
     g.line(-sim.moonMajorAxis()/2, 0, sim.moonMajorAxis()/2, 0);
@@ -307,13 +313,14 @@ class Renderer {
   private void drawLunarNodes(Sim sim, PGraphics g, float t) {
     PVector planetPos = sim.getPlanetPosition(t);
     float apsidalPrecessionTime = t / sim.apsidalPrecessionPeriod();
+    float nodalPrecessionTime = t / sim.nodalPrecessionPeriod();
 
     float a = sim.moonMajorAxis() / 2;
     float b = sim.moonMinorAxis() / 2;
     float c = sqrt(a * a - b * b);
 
-    float cosine = cos(-apsidalPrecessionTime * 2 * PI);
-    float sine = sin(-apsidalPrecessionTime * 2 * PI);
+    float cosine = cos((-nodalPrecessionTime - apsidalPrecessionTime) * 2 * PI);
+    float sine = sin((-nodalPrecessionTime - apsidalPrecessionTime) * 2 * PI);
 
     // Quadratic formula.
     float qa = a * a * sine * sine + b * b * cosine * cosine;
@@ -332,7 +339,7 @@ class Renderer {
     g.translate(planetPos.x, planetPos.y, planetPos.z);
     g.rotateX(HALF_PI);
     g.rotateZ(HALF_PI);
-    g.rotateX(sim.lunarOrbitInclineRad());
+    g.rotateZ(nodalPrecessionTime * 2 * PI);
     g.line(x0, 0, x1, 0);
 
     // Ascending node.

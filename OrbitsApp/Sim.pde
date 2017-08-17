@@ -7,6 +7,7 @@ class Sim {
   private float _moonMajorAxis;
   private float _moonMinorAxis;
   private float _lunarOrbitInclineRad;
+  private float _nodalPrecessionPeriod;
   private float _lunarOrbitPeriod;
   private float _apsidalPrecessionPeriod;
   private float _moonRadius;
@@ -19,6 +20,7 @@ class Sim {
     _moonMajorAxis = 500;
     _moonMinorAxis = 475;
     _lunarOrbitInclineRad = radians(20);//radians(5.1);
+    _nodalPrecessionPeriod = 18.6;
     _lunarOrbitPeriod = 1. / 12;
     _apsidalPrecessionPeriod = 9;
     _moonRadius = 50;
@@ -82,6 +84,15 @@ class Sim {
     return _lunarOrbitInclineRad;
   }
 
+  Sim nodalPrecessionPeriod(float v) {
+    _nodalPrecessionPeriod = v;
+    return this;
+  }
+
+  float nodalPrecessionPeriod() {
+    return _nodalPrecessionPeriod;
+  }
+
   Sim lunarOrbitInclineRad(float v) {
     _lunarOrbitInclineRad = v;
     return this;
@@ -136,6 +147,7 @@ class Sim {
   PVector getMoonPosition(float t, float lunarOrbitTime) {
     PVector planetPos = getPlanetPosition(t);
     float apsidalPrecessionTime = t / _apsidalPrecessionPeriod;
+    float nodalPrecessionTime = t / _nodalPrecessionPeriod;
     
     float a = _moonMajorAxis / 2;
     float b = _moonMinorAxis / 2;
@@ -148,7 +160,9 @@ class Sim {
 
     pos = ThreeDee.translate(pos, c, 0, 0);
     pos = ThreeDee.rotateZ(pos, -apsidalPrecessionTime * 2 * PI);
+    pos = ThreeDee.rotateZ(pos, -nodalPrecessionTime * 2 * PI);
     pos = ThreeDee.rotateX(pos, _lunarOrbitInclineRad);
+    pos = ThreeDee.rotateZ(pos, nodalPrecessionTime * 2 * PI);
     pos = ThreeDee.rotateZ(pos, HALF_PI);
     pos = ThreeDee.rotateX(pos, HALF_PI);
     pos = ThreeDee.translate(pos, planetPos.x, planetPos.y, planetPos.z);
