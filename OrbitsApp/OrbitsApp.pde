@@ -44,7 +44,7 @@ Slider fadeInput;
 Slider lunarOrbitInclineInput;
 Sparkline spDeltaSparkline;
 Sparkline spDeltaLogSparkline;
-Sparkline gyroSparkline;
+Sparkline[] gyroSparklines;
 
 FileNamer fileNamer;
 
@@ -68,7 +68,6 @@ void setup() {
   background(0);
 
   sim = new Sim();
-  sim.printPotentialSarosCycles();
 
   PeasyCam backgroundCam = createCam(backgroundBuffer);
   PeasyCam renderCam = createCam(renderBuffer);
@@ -102,7 +101,10 @@ void setup() {
   spDeltaHistoryMaxSize = 2000;
   spDeltaSparkline = new Sparkline(10, 0.85 * height, width * 0.25 - 20, 0.04 * height);
   spDeltaLogSparkline = new Sparkline(10, 0.9 * height, width * 0.25 - 20, 0.04 * height);
-  gyroSparkline = new Sparkline(10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
+  gyroSparklines = new Sparkline[3];
+  gyroSparklines[0] = new Sparkline(width * 0.00 + 10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
+  gyroSparklines[1] = new Sparkline(width * 0.25 + 10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
+  gyroSparklines[2] = new Sparkline(width * 0.50 + 10, 0.95 * height, width * 0.25 - 20, 0.04 * height);
 
   fileNamer = new FileNamer("output/frame", "png");
 }
@@ -157,8 +159,8 @@ void setupInputs() {
 
 void draw() {
   if (useGyro) {
-    float v = map(gyroReader.magnitude(), 0, gyroReader.MAX_VALUE, 0.0002, 0.5);
-    speed = -gyroReader.direction() * v * v;
+    float v = map(gyroReader.magnitude(0), 0, gyroReader.MAX_VALUE, 0.0002, 0.5);
+    speed = -gyroReader.direction(0) * v * v;
   }
 
   if (!isPaused) {
@@ -306,7 +308,9 @@ void updateSparklines() {
 void drawSparklines() {
   spDeltaSparkline.draw(g, spDeltaHistory, spDeltaHistoryMaxSize, 0, PI);
   spDeltaLogSparkline.draw(g, spDeltaLogHistory, spDeltaHistoryMaxSize, 0, pow(PI, spDeltaLogPower));
-  gyroSparkline.draw(g, gyroReader.magnitudeHistory(), gyroReader.MAX_READINGS, 0, gyroReader.MAX_VALUE);
+  for (int i = 0; i < gyroSparklines.length; i++) {
+    gyroSparklines[i].draw(g, gyroReader.magnitudeHistory(i), gyroReader.MAX_READINGS, 0, gyroReader.MAX_VALUE);
+  }
 }
 
 void keyReleased() {
