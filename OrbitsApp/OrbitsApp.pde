@@ -261,15 +261,18 @@ boolean drawLongTermBuffer() {
     return false;
   }
 
+  int frameWidth = 240;
+  int frameHeight = 135;
+
   int rangeStepsPerYear = 600;
   int direction = (int)(abs(delta) / delta);
   float t = (float)ceil(lastDrawTime * rangeStepsPerYear) / rangeStepsPerYear;
-  float maxX = width - 480;
+  float maxX = width - frameWidth;
 
   boolean drew = false;
   while ((t <= time) == (direction >= 0)) {
-    float x = (t - longTermStartTime) * 120;
-    float y = 270 * floor(x / maxX);
+    float x = (t - longTermStartTime) * (maxX / (float)sim.sarosCycle());
+    float y = frameHeight * floor(x / maxX);
     x = x % maxX;
 
     longTermBuffer.beginDraw();
@@ -278,7 +281,7 @@ boolean drawLongTermBuffer() {
     longTermBuffer.endDraw();
 
     blendMode(ADD);
-    image(longTermBuffer, x, y, 480, 270);
+    image(longTermBuffer, x, y, frameWidth, frameHeight);
 
     drew = true;
     lastDrawTime = t;

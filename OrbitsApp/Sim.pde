@@ -1,5 +1,7 @@
 
 class Sim {
+  private final double MAX_SAROS_ERROR = 1./365.25/24 * 1;
+
   private float _sunRadius;
   private float _planetOrbitDist;
   private float _planetRadius;
@@ -21,13 +23,12 @@ class Sim {
     _moonMajorAxis = 500;
     _moonMinorAxis = 475;
     _lunarOrbitInclineRad = radians(20);//radians(5.1);
-    _nodalPrecessionPeriod = 18.6;
+    _nodalPrecessionPeriod = 17.5;
     _lunarOrbitPeriod = 1. / 12;
-    _apsidalPrecessionPeriod = 14.2;
+    _apsidalPrecessionPeriod = 8.0;
     _moonRadius = 50;
     
-    // Calculate from the synodic, anomalistic, and draconic months.
-    _sarosCycle = 22.000000685733248;
+    _sarosCycle = (float)calculateSarosCycle(_lunarOrbitPeriod, _apsidalPrecessionPeriod, _nodalPrecessionPeriod);
   }
 
   float sunRadius() {
@@ -199,23 +200,21 @@ class Sim {
   }
 
   double getAnomalisticMonth() {
-    return _lunarOrbitPeriod - _lunarOrbitPeriod / _apsidalPrecessionPeriod;
+    return _lunarOrbitPeriod * (1 - 1 / _apsidalPrecessionPeriod);
   }
 
   double getDraconicMonth() {
-    return _lunarOrbitPeriod - _lunarOrbitPeriod / _nodalPrecessionPeriod;
+    return _lunarOrbitPeriod * (1 - 1 / _nodalPrecessionPeriod);
   }
 
   void printPotentialSarosCycles() {
-    double maxError = 1./365.25/24 * 3;
-
-    double apsidalPrecessionPeriod = 9.8;
-    double nodalPrecessionPeriod = 18.6;
-
     for (int j = 0; j < 1000; j++) {
-      double synodicMonth = getSynodicMonth();
-      double anomalisticMonth = _lunarOrbitPeriod * (1 - 1 / apsidalPrecessionPeriod);//getAnomalisticMonth();
-      double draconicMonth = _lunarOrbitPeriod * (1 - 1 / 18.6);//getDraconicMonth();
+      float apsidalPrecessionPeriod = (float)floor(random(7, 12) * 10) / 10;
+      float nodalPrecessionPeriod = (float)floor(random(16, 20) * 10) / 10;
+
+      double synodicMonth = (double)_lunarOrbitPeriod * (1 - _lunarOrbitPeriod);
+      double anomalisticMonth = (double)_lunarOrbitPeriod * (1 - 1 / apsidalPrecessionPeriod);
+      double draconicMonth = (double)_lunarOrbitPeriod * (1 - 1 / nodalPrecessionPeriod);
 
       int synodicCount = 1;
       int anomalisticCount = 1;
@@ -233,24 +232,67 @@ class Sim {
           synodicCount++;
         }
 
-        if (getError(s, a) < maxError && getError(s, d) < maxError && getError(a, d) < maxError) {
-          if (s < 15) {
+        if (getError(s, a) < MAX_SAROS_ERROR
+            && getError(s, d) < MAX_SAROS_ERROR
+            && getError(a, d) < MAX_SAROS_ERROR) {
+          if (s < 18 || s > 22) {
             break;
           }
-          println(apsidalPrecessionPeriod, nodalPrecessionPeriod);
-          println(">", s, a, d);
-          println((s - java.lang.Math.floor(s)) * 365.25);
+          println(s, a, d);
+          println("> apsidal:", apsidalPrecessionPeriod, "nodal:", nodalPrecessionPeriod);
+          println("> synodic:", synodicMonth, "anomalistic:", anomalisticMonth, "draconic:", draconicMonth);
+          println("> error: ", java.lang.Math.min(java.lang.Math.min(getError(s, a), getError(s, d)), getError(a, d)));
           println();
           break;
         }
       }
+    }
+  }
 
-      if (j % 2 == 0) {
-        apsidalPrecessionPeriod += 0.1;
+  private double calculateSarosCycle(float synodicPeriod, float apsidalPrecessionPeriod, float nodalPrecessionPeriod) {
+    double synodicMonth = (double)synodicPeriod * (1 - synodicPeriod);
+    double anomalisticMonth = (double)synodicPeriod * (1 - 1 / apsidalPrecessionPeriod);
+    double draconicMonth = (double)synodicPeriod * (1 - 1 / nodalPrecessionPeriod);
+
+    int synodicCount = 1;
+    int anomalisticCount = 1;
+    int draconicCount = 1;
+
+    for (int i = 0; i < 1000; i++) {
+      double s = synodicMonth * synodicCount;
+      double a = anomalisticMonth * anomalisticCount;
+      double d = draconicMonth * draconicCount;
+      if (a < s && a < d) {
+        anomalisticCount++;
+      } else if (d < s && d < a) {
+        draconicCount++;
       } else {
-        nodalPrecessionPeriod += 0.1;
+        synodicCount++;
+      }
+
+      if (getError(s, a) < MAX_SAROS_ERROR
+          && getError(s, d) < MAX_SAROS_ERROR
+          && getError(a, d) < MAX_SAROS_ERROR) {
+        if (s < 18 || s > 25) {
+          println("ERROR Undesirable Saros cycle found.");
+          return 0;
+        }
+
+        println("Using Saros cycle:");
+        println("\t", s, a, d);
+        println("\t", "> apsidal:", apsidalPrecessionPeriod, "nodal:", nodalPrecessionPeriod);
+        println("\t", "< synodic:", synodicMonth);
+        println("\t", "< anomalistic:", anomalisticMonth);
+        println("\t", "< draconic:", draconicMonth);
+        println("\t", "< error: ", java.lang.Math.min(java.lang.Math.min(getError(s, a), getError(s, d)), getError(a, d)));
+        println();
+
+        return (s + a + d) / 3;
       }
     }
+
+    println("ERROR Saros cycle too long.");
+    return 0;
   }
 
   private double getError(double a, double b) {
