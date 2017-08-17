@@ -16,8 +16,8 @@ class Sim {
     _planetOrbitDist = 1800;
     _planetRadius = 100;
     _dayPeriod = 1. / 365.25;
-    _moonMajorAxis = 600;
-    _moonMinorAxis = 550;
+    _moonMajorAxis = 500;
+    _moonMinorAxis = 475;
     _lunarOrbitInclineRad = radians(20);//radians(5.1);
     _lunarOrbitPeriod = 1. / 12;
     _apsidalPrecessionPeriod = 9;

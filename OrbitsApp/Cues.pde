@@ -183,16 +183,9 @@ class Cues {
 
   private Cues sceneDefault() {
     _sim
-      .sunRadius(330)
-      .planetOrbitDist(1800)
-      .planetRadius(100)
-      .dayPeriod(1. / 365.25)
       .moonMajorAxis(500)
       .moonMinorAxis(475)
-      .lunarOrbitInclineRad(radians(20))
-      .lunarOrbitPeriod(1. / 12)
-      .apsidalPrecessionPeriod(9)
-      .moonRadius(50);
+      .lunarOrbitInclineRad(radians(20));
     _renderer
       .showFlatMoonOrbit(false)
       .showLunarApsides(false)

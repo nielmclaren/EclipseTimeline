@@ -82,7 +82,7 @@ void setup() {
 
   time = 0;
   lastDrawTime = 0;
-  isLongTermMode = true;
+  isLongTermMode = false;
   longTermStartTime = 0;
 
   useGyro = initialUseGyro;
