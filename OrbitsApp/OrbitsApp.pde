@@ -84,7 +84,7 @@ void setup() {
 
   time = 0;
   lastDrawTime = 0;
-  isLongTermMode = false;
+  isLongTermMode = true;
   longTermStartTime = 0;
 
   useGyro = initialUseGyro;
@@ -158,7 +158,7 @@ void setupInputs() {
 void draw() {
   if (useGyro) {
     float v = map(gyroReader.magnitude(), 0, gyroReader.MAX_VALUE, 0.0002, 0.5);
-    speed = gyroReader.direction() * v * v;
+    speed = -gyroReader.direction() * v * v;
   }
 
   if (!isPaused) {
@@ -268,7 +268,7 @@ boolean drawLongTermBuffer() {
 
   boolean drew = false;
   while ((t <= time) == (direction >= 0)) {
-    float x = -(t - longTermStartTime) * 120;
+    float x = (t - longTermStartTime) * 120;
     float y = 270 * floor(x / maxX);
     x = x % maxX;
 
@@ -306,23 +306,6 @@ void drawSparklines() {
   gyroSparkline.draw(g, gyroReader.magnitudeHistory(), gyroReader.MAX_READINGS, 0, gyroReader.MAX_VALUE);
 }
 
-void saveAnimation() {
-  FileNamer animationNamer = new FileNamer("output/anim", "/");
-  FileNamer frameNamer = new FileNamer(animationNamer.next() + "frame", "png");
-
-  int numFrames = 300;
-  for (int i = 0; i < numFrames; i++) {
-    float t = (float)i / numFrames;
-    renderBuffer.beginDraw();
-    renderer.draw(sim, renderBuffer, t);
-    renderBuffer.endDraw();
-
-    image(renderBuffer, 0, 0);
-
-    save(frameNamer.next());
-  }
-}
-
 void keyReleased() {
   int keyNum = key - '0';
   if (keyNum >= 0 && keyNum < 10 && keyNum < sceneNames.length) {
@@ -332,9 +315,6 @@ void keyReleased() {
   switch (key) {
     case ' ':
       isPaused = !isPaused;
-      break;
-    case 'a':
-      saveAnimation();
       break;
     case 'r':
       save(fileNamer.next());
