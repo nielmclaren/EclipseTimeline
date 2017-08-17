@@ -352,17 +352,18 @@ void controlEvent(ControlEvent e) {
     boolean v = cp5.getController("useGyroInput").getValue() != 0;
     useGyro = v;
 
-    if (!useGyro) {
-      float speedValue = cp5.getController("speedInput").getValue();
+    if (!useGyro && speedInput != null) {
+      float speedValue = speedInput.getValue();
       speed = speedValue * speedValue;
     }
-
     println("Use gyro: " + useGyro);
   } else if (e.isFrom(cp5.getController("speedInput"))) {
     float v = cp5.getController("speedInput").getValue();
     speed = v * v;
 
-    useGyroInput.setValue(false);
+    if (useGyroInput != null) {
+      useGyroInput.setValue(false);
+    }
     useGyro = false;
 
     println("Speed: " + speed);
