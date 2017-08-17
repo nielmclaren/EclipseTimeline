@@ -4,13 +4,21 @@ class Cues {
   private Sim _sim;
   private CameraController _cam;
   private Renderer _renderer;
+  private float _scale;
 
   Cues(Sim sim, PeasyCam[] cams, Renderer renderer) {
     _sim = sim;
     _cam = new CameraController(sim, cams);
     _renderer = renderer;
+    _scale = 1;
 
     sceneDefault();
+  }
+
+  Cues scale(float v) {
+    _scale = v;
+    _cam.scale(v);
+    return this;
   }
 
   Cues cue(String cueName) {
@@ -128,7 +136,7 @@ class Cues {
     CameraSetting setting = new CameraSetting()
       .pitch(radians(15))
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 2.2);
+      .dist(_sim.planetOrbitDist() * 2.2 * _scale);
     _cam.animateTo(setting, durationMs);
     return this;
   }
@@ -137,7 +145,7 @@ class Cues {
     CameraSetting setting = new CameraSetting()
       .pitch(0)
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 2.2);
+      .dist(_sim.planetOrbitDist() * 2.2 * _scale);
     _cam.animateTo(setting, durationMs);
     return this;
   }
@@ -146,7 +154,7 @@ class Cues {
     CameraSetting setting = new CameraSetting()
       .pitch(HALF_PI)
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 2.2);
+      .dist(_sim.planetOrbitDist() * 2.2 * _scale);
     _cam.animateTo(setting, durationMs);
     return this;
   }
@@ -182,18 +190,8 @@ class Cues {
   }
 
   private Cues sceneDefault() {
-    _sim
-      .moonMajorAxis(500)
-      .moonMinorAxis(475)
-      .lunarOrbitInclineRad(radians(20));
-    _renderer
-      .showFlatMoonOrbit(false)
-      .showLunarApsides(false)
-      .showLunarNodes(false)
-      .showPlanetOrbit(true)
-      .showPlanet(true)
-      .showSun(true)
-      .showSunPlanetLine(false);
+    _sim.reset();
+    _renderer.reset();
     return this;
   }
 

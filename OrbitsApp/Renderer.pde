@@ -18,19 +18,26 @@ class Renderer {
   private color _lineColor2 = color(17, 5, 78);
 
   Renderer() {
-    _showFlatMoonOrbit = true;
-    _showLunarApsides = true;
-    _showLunarNodes = true;
+    reset();
+
+    _lastDrawTime = 0;
+
+    _starField = new TextureSphere(loadImage("starmap_4k.bmp"), 5000);
+
+  }
+
+  Renderer reset() {
+    _showFlatMoonOrbit = false;
+    _showLunarApsides = false;
+    _showLunarNodes = false;
     _showMoonOrbit = true;
     _showPlanet = true;
     _showPlanetOrbit = true;
     _showSun = true;
-    _showSunPlanetLine = true;
+    _showSunPlanetLine = false;
 
     _rangeStepsPerYear = 200;
-    _lastDrawTime = 0;
-
-    _starField = new TextureSphere(loadImage("starmap_4k.bmp"), 5000);
+    return this;
   }
 
   Renderer showFlatMoonOrbit(boolean v) {

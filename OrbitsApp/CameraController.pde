@@ -11,6 +11,7 @@ class CameraController {
 
   private Sim _sim;
   private PeasyCam[] _cams;
+  private float _scale;
 
   private final PVector _center;
 
@@ -28,6 +29,7 @@ class CameraController {
   CameraController(Sim sim, PeasyCam[] cams) {
     _sim = sim;
     _cams = cams;
+    _scale = 1;
 
     _center = new PVector(0, 0, 0);
 
@@ -41,6 +43,11 @@ class CameraController {
 
     _followMode = STATIC;
     _isLockedOnPlanetOverhead = false;
+  }
+
+  CameraController scale(float v) {
+    _scale = v;
+    return this;
   }
 
   CameraController animateTo(CameraSetting setting, long durationMs) {
@@ -168,7 +175,7 @@ class CameraController {
       .yaw((float)(millis() % (rotationsPerMillisecond)) / rotationsPerMillisecond * 2 * PI)
       .pitch(radians(15))
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 2.2)
+      .dist(_sim.planetOrbitDist() * 2.2 * _scale)
       .lookAt(_center);
   }
 
@@ -197,7 +204,7 @@ class CameraController {
     float planetRotation = normalizeAngle(HALF_PI + _sim.getPlanetRotation(t));
     return new CameraSetting()
       .pitch(HALF_PI)
-      .dist(_sim.moonMajorAxis() * 1.4)
+      .dist(_sim.moonMajorAxis() * 1.4 * _scale)
       .lookAt(planetPos);
   }
 
@@ -207,7 +214,7 @@ class CameraController {
     return new CameraSetting()
       .yaw(planetRotation)
       .pitch(HALF_PI)
-      .dist(_sim.moonMajorAxis() * 1.4)
+      .dist(_sim.moonMajorAxis() * 1.4 * _scale)
       .lookAt(planetPos);
   }
 
@@ -218,7 +225,7 @@ class CameraController {
       .yaw(2 * PI * 0.375 + nodalPrecessionTime * 2 * PI)
       .pitch(radians(15))
       .roll(0)
-      .dist(_sim.planetOrbitDist() * 1.2)
+      .dist(_sim.planetOrbitDist() * 1.2 * _scale)
       .lookAt(planetPos);
   }
 

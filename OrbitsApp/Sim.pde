@@ -16,6 +16,10 @@ class Sim {
   private float _sarosCycle;
 
   Sim() {
+    reset();
+  }
+
+  Sim reset() {
     _sunRadius = 330;
     _planetOrbitDist = 1800;
     _planetRadius = 100;
@@ -29,6 +33,7 @@ class Sim {
     _moonRadius = 50;
     
     _sarosCycle = (float)calculateSarosCycle(_lunarOrbitPeriod, _apsidalPrecessionPeriod, _nodalPrecessionPeriod);
+    return this;
   }
 
   float sunRadius() {
@@ -277,16 +282,6 @@ class Sim {
           println("ERROR Undesirable Saros cycle found.");
           return 0;
         }
-
-        println("Using Saros cycle:");
-        println("\t", s, a, d);
-        println("\t", "> apsidal:", apsidalPrecessionPeriod, "nodal:", nodalPrecessionPeriod);
-        println("\t", "< synodic:", synodicMonth);
-        println("\t", "< anomalistic:", anomalisticMonth);
-        println("\t", "< draconic:", draconicMonth);
-        println("\t", "< error: ", java.lang.Math.min(java.lang.Math.min(getError(s, a), getError(s, d)), getError(a, d)));
-        println();
-
         return (s + a + d) / 3;
       }
     }

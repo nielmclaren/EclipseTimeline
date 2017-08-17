@@ -5,10 +5,16 @@ import processing.serial.*;
 
 GyroReader gyroReader;
 
+int mainWidth;
+int mainHeight;
+int sideWidth;
+int sideHeight;
+
 PGraphics backgroundBuffer;
 PGraphics renderBuffer;
 PGraphics fadeBuffer;
 PGraphics compositeBuffer;
+PGraphics longTermRenderBuffer;
 PGraphics longTermBuffer;
 
 Sim sim;
@@ -32,6 +38,9 @@ boolean isPaused;
 int fadeAmount;
 final int initialFadeAmount = 220;
 
+SideShow topRightShow;
+SideShow midRightShow;
+
 ArrayList<Float> spDeltaHistory;
 ArrayList<Float> spDeltaLogHistory;
 float spDeltaLogPower;
@@ -52,18 +61,24 @@ FileNamer fileNamer;
 void setup() {
   fullScreen(P3D);
 
+  mainWidth = floor(width * 0.7);
+  mainHeight = floor(height);
+  sideWidth = floor(width * 0.3);
+  sideHeight = floor(height * 1/3);
+
   printArray(Serial.list());
   gyroReader = new GyroReader(new Serial(this, Serial.list()[1], 9600));
 
-  backgroundBuffer = createBuffer(width, height, P3D);
-  renderBuffer = createBuffer(width, height, P3D);
-  fadeBuffer = createBuffer(width, height, P3D);
+  backgroundBuffer = createBuffer(mainWidth, mainHeight, P3D);
+  renderBuffer = createBuffer(mainWidth, mainHeight, P3D);
+  fadeBuffer = createBuffer(mainWidth, mainHeight, P3D);
   fadeBuffer.beginDraw();
   fadeBuffer.blendMode(BLEND);
   fadeBuffer.noStroke();
   fadeBuffer.endDraw();
-  compositeBuffer = createBuffer(width, height, P3D);
-  longTermBuffer = createBuffer(width, height, P3D);
+  compositeBuffer = createBuffer(mainWidth, mainHeight, P3D);
+  longTermRenderBuffer = createBuffer(mainWidth, mainHeight, P3D);
+  longTermBuffer = createBuffer(mainWidth, mainHeight, P3D);
 
   background(0);
 
@@ -71,11 +86,12 @@ void setup() {
 
   PeasyCam backgroundCam = createCam(backgroundBuffer);
   PeasyCam renderCam = createCam(renderBuffer);
+  PeasyCam longTermRenderCam = createCam(longTermRenderBuffer);
   PeasyCam longTermCam = createCam(longTermBuffer);
 
   renderer = new Renderer();
   longTermRenderer = new LongTermRenderer();
-  cues = new Cues(sim, new PeasyCam[]{backgroundCam, renderCam, longTermCam}, renderer);
+  cues = new Cues(sim, new PeasyCam[]{backgroundCam, renderCam, longTermRenderCam, longTermCam}, renderer);
 
   sceneNames = new String[]{"overhead", "intro", "eclipse", "intro_synodic", "intro_anomalistic", "intro_draconic"};
   selectedSceneName = "";
@@ -83,13 +99,17 @@ void setup() {
 
   time = 0;
   lastDrawTime = 0;
-  isLongTermMode = true;
+  isLongTermMode = false;
   longTermStartTime = 0;
 
   useGyro = initialUseGyro;
   speed = initialSpeed;
   isPaused = false;
   fadeAmount = initialFadeAmount;
+
+  String[] sideBarSceneNames = new String[]{"intro", "eclipse", "intro_draconic"};
+  topRightShow = new SideShow(1, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames);
+  midRightShow = new SideShow(2, sideWidth, sideHeight).gyroReader(gyroReader).sceneNames(sideBarSceneNames);
   
   cp5 = new ControlP5(this);
   
@@ -181,7 +201,11 @@ void draw() {
 
   if (!isPaused) {
     updateSparklines();
+    topRightShow.update();
+    midRightShow.update();
   }
+
+  drawSideBar();
 
   blendMode(BLEND);
   text(frameRate + " fps", 20, 20);
@@ -223,7 +247,7 @@ boolean updateRenderBuffer() {
 void updateFadeBuffer() {
   fadeBuffer.beginDraw();
   fadeBuffer.fill(0, 255 - fadeAmount);
-  fadeBuffer.rect(0, 0, width, height);
+  fadeBuffer.rect(0, 0, fadeBuffer.width, fadeBuffer.height);
   fadeBuffer.endDraw();
 
   if (fadeAmount > 230) {
@@ -263,13 +287,13 @@ boolean drawLongTermBuffer() {
     return false;
   }
 
-  int frameWidth = 240;
+  int frameWidth = 160;
   int frameHeight = 135;
 
   int rangeStepsPerYear = 600;
   int direction = (int)(abs(delta) / delta);
   float t = (float)ceil(lastDrawTime * rangeStepsPerYear) / rangeStepsPerYear;
-  float maxX = width - frameWidth;
+  float maxX = mainWidth - frameWidth;
 
   boolean drew = false;
   while ((t <= time) == (direction >= 0)) {
@@ -277,20 +301,35 @@ boolean drawLongTermBuffer() {
     float y = frameHeight * floor(x / maxX);
     x = x % maxX;
 
-    longTermBuffer.beginDraw();
-    longTermBuffer.background(0, 0);
-    longTermRenderer.draw(sim, longTermBuffer, t);
-    longTermBuffer.endDraw();
+    longTermRenderBuffer.beginDraw();
+    longTermRenderBuffer.background(0, 0);
+    longTermRenderer.draw(sim, longTermRenderBuffer, t);
+    longTermRenderBuffer.endDraw();
 
     blendMode(ADD);
-    image(longTermBuffer, x, y, frameWidth, frameHeight);
+    image(longTermRenderBuffer, x, y, frameWidth, frameHeight);
+    blendMode(BLEND);
 
     drew = true;
     lastDrawTime = t;
     t += 1.0 / rangeStepsPerYear * direction;
   }
 
+
   return drew;
+}
+
+void drawSideBar() {
+  float x = width - sideWidth;
+  image(topRightShow.renderBuffer(), x, sideHeight * 0);
+  image(midRightShow.renderBuffer(), x, sideHeight * 1);
+
+  noFill();
+  stroke(255);
+  strokeWeight(2);
+  rect(x, sideHeight * 0, sideWidth, sideHeight);
+  rect(x, sideHeight * 1, sideWidth, sideHeight);
+  rect(x, sideHeight * 2, sideWidth, sideHeight);
 }
 
 void updateSparklines() {
@@ -322,16 +361,23 @@ void keyReleased() {
   switch (key) {
     case ' ':
       isPaused = !isPaused;
+      topRightShow.isPaused(isPaused);
+      midRightShow.isPaused(isPaused);
       break;
     case 'r':
       save(fileNamer.next());
       break;
     case 't':
+      background(0);
+      longTermRenderBuffer.beginDraw();
+      longTermRenderBuffer.background(0);
+      longTermRenderBuffer.endDraw();
       longTermBuffer.beginDraw();
       longTermBuffer.background(0);
       longTermBuffer.endDraw();
       isLongTermMode = !isLongTermMode;
       longTermStartTime = time;
+      println("Long term mode:", isLongTermMode);
       break;
   }
 }
