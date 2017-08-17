@@ -214,7 +214,7 @@ class CameraController {
   private CameraSetting getFollowPlanetLunarNodesCameraSetting(float t) {
     PVector planetPos = _sim.getPlanetPosition(t);
     return new CameraSetting()
-      .yaw(2 * PI * 0.625)
+      .yaw(2 * PI * 0.375)
       .pitch(radians(15))
       .roll(0)
       .dist(_sim.planetOrbitDist() * 1.2)

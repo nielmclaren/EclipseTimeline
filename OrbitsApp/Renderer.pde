@@ -30,7 +30,7 @@ class Renderer {
     _rangeStepsPerYear = 200;
     _lastDrawTime = 0;
 
-    _starField = new TextureSphere(loadImage("starmap_4k.bmp"), 4000);
+    _starField = new TextureSphere(loadImage("starmap_4k.bmp"), 5000);
   }
 
   Renderer showFlatMoonOrbit(boolean v) {
@@ -233,6 +233,7 @@ class Renderer {
 
     g.translate(planetPos.x, planetPos.y, planetPos.z);
     g.rotateX(HALF_PI);
+    g.rotateZ(HALF_PI);
     g.rotateZ(-apsidalPrecessionTime * 2 * PI);
     g.translate(c, 0);
     g.ellipse(0, 0, sim.moonMajorAxis(), sim.moonMinorAxis());
