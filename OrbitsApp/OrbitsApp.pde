@@ -26,7 +26,7 @@ LongTermRenderer longTermRenderer;
 Cues cues;
 
 String[] sceneNames;
-String selectedSceneName;
+int selectedSceneIndex;
 
 float time;
 float lastDrawTime;
@@ -63,6 +63,7 @@ FileNamer fileNamer;
 
 void setup() {
   fullScreen(P3D);
+  noCursor();
 
   Palette.lineColor0 = color(83, 80, 230);
   Palette.lineColor1 = color(175, 209, 252);
@@ -104,8 +105,7 @@ void setup() {
   longTermRenderer = new LongTermRenderer();
   cues = new Cues(sim, new PeasyCam[]{backgroundCam, renderCam, longTermRenderCam, longTermCam}, renderer);
 
-  sceneNames = new String[]{"intro", "eclipse", "overhead", "synodic", "anomalistic", "draconic"};
-  selectedSceneName = "";
+  sceneNames = new String[]{"intro", "eclipse", "overhead", "timeline", "synodic", "anomalistic", "draconic"};
   cueScene("intro");
 
   time = 0;
@@ -124,7 +124,7 @@ void setup() {
 
   cp5 = new ControlP5(this);
   
-  setupInputs();
+  //setupInputs();
 
   spDeltaHistoryMap = new HashMap<Integer, ArrayList<Float>>();
   spDeltaLogHistoryMap = new HashMap<Integer, ArrayList<Float>>();
@@ -236,9 +236,11 @@ void draw() {
 
   drawSideBar();
 
+/*
   blendMode(BLEND);
   text(frameRate + " fps", 20, 20);
-  text(selectedSceneName, 20, 40);
+  text(sceneNames[selectedSceneIndex], 20, 40);
+*/
   drawSparklines();
 
   if (!isPaused) {
@@ -399,7 +401,6 @@ void drawSparklines() {
 }
 
 void initLongTermMode() {
-  cueScene("overhead");
   background(0);
   longTermRenderBuffer.beginDraw();
   longTermRenderBuffer.background(0);
@@ -410,14 +411,46 @@ void initLongTermMode() {
 }
 
 void cueScene(String sceneName) {
+  if (sceneName == "timeline") {
+    isLongTermMode = true;
+    longTermStartTime = time;
+    sceneName = "overhead";
+  } else {
+    isLongTermMode = false;
+  }
+
   cues.cue(sceneName);
-  selectedSceneName = sceneName;
+
+  for (int i = 0; i < sceneNames.length; i++) {
+    if (sceneNames[i] == sceneName) {
+      selectedSceneIndex = i;
+    }
+  }
+
+  if (isLongTermMode) {
+    initLongTermMode();
+  }
 }
 
 void keyReleased() {
   int keyNum = key - '0';
   if (keyNum >= 0 && keyNum < 10 && keyNum < sceneNames.length) {
     cueScene(sceneNames[keyNum]);
+  }
+
+println(keyCode);
+  if (keyCode == 16) {
+    selectedSceneIndex--;
+    if (selectedSceneIndex < 0) {
+      selectedSceneIndex = sceneNames.length - 1;
+    }
+    cueScene(sceneNames[selectedSceneIndex]);
+  } else if (keyCode == 11) {
+    selectedSceneIndex++;
+    if (selectedSceneIndex >= sceneNames.length) {
+      selectedSceneIndex = 0;
+    }
+    cueScene(sceneNames[selectedSceneIndex]);
   }
 
   switch (key) {
@@ -430,11 +463,7 @@ void keyReleased() {
       save(fileNamer.next());
       break;
     case 't':
-      isLongTermMode = !isLongTermMode;
-      longTermStartTime = time;
-      if (isLongTermMode) {
-        initLongTermMode();
-      }
+      cueScene("timeline");
       println("Long term mode:", isLongTermMode);
       break;
   }
